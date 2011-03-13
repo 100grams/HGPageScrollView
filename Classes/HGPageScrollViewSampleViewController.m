@@ -71,7 +71,7 @@
 	[toolbar setItems:[NSArray arrayWithObject:barButton] animated:NO];
 	
 	// now that we have the data, initialize the page scroll view
-	pageScrollView = [[[NSBundle mainBundle] loadNibNamed:@"HGPageScrollView" owner:self options:nil] objectAtIndex:0];
+	HGPageScrollView *pageScrollView = [[[NSBundle mainBundle] loadNibNamed:@"HGPageScrollView" owner:self options:nil] objectAtIndex:0];
 	[self.view addSubview:pageScrollView];
 	
 }
@@ -196,6 +196,8 @@
 
 - (IBAction) didClickBrowsePages : (id) sender
 {
+	HGPageScrollView *pageScrollView = [[self.view subviews] lastObject];
+	
 	if(pageScrollView.viewMode == HGPageScrollViewModePage){  
 		[pageScrollView deselectPageAnimated:YES];
 	}

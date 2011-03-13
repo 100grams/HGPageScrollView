@@ -31,9 +31,7 @@
 #define kNumPages 10
 
 @interface HGPageScrollViewSampleViewController : UIViewController <HGPageScrollViewDelegate, HGPageScrollViewDataSource> {
-	
-	HGPageScrollView *pageScrollView;
-	
+		
 	NSMutableArray *_myPageDataArray;
 	
 	IBOutlet UIToolbar *toolbar;
