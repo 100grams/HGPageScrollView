@@ -5,10 +5,8 @@ An extension of iOS UIScrollView that allows scrolling of multiple pages, like m
 HGPageScrollView uses a similar methodology to UITableView. It defines both a **dataSource** and a **delegate**, which its client can implement. At the very least HGPageScrollView expects its dataSource to provide **HGPageViews** to display. 
 
 Like UITableView, HGPageScrollView provides a way to improve performance by reusing pages. It maintains a queue of pages that the data source has marked for reuse. A page is marked for reuse by assigning a value to its *reuseIdentifier*.             
-
-![](https://github.com/100grams/HGPageScrollView/raw/master/Screenshots/HGPageScrollView_Screen_shot_1.png) 
+ 
 ![](http://github.com/100grams/HGPageScrollView/raw/master/Screenshots/HGPageScrollView_Screen_shot_2.png)
-
 
 
 ## Requirements ##
