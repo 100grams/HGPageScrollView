@@ -1,0 +1,174 @@
+// !$*UTF8*$!
+{
+	1D6058900D05DD3D006BFB54 /* HGPageScrollViewSample */ = {
+		activeExec = 0;
+		executables = (
+			5E903D31132D69C400231F45 /* HGPageScrollViewSample */,
+		);
+	};
+	28D7ACF60DDB3853001CB0EB /* HGPageScrollViewSampleViewController.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {917, 572}}";
+			sepNavSelRange = "{1282, 0}";
+			sepNavVisRange = "{604, 939}";
+		};
+	};
+	28D7ACF70DDB3853001CB0EB /* HGPageScrollViewSampleViewController.m */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {917, 2899}}";
+			sepNavSelRange = "{1301, 0}";
+			sepNavVisRange = "{973, 825}";
+		};
+	};
+	29B97313FDCFA39411CA2CEA /* Project object */ = {
+		activeBuildConfigurationName = Debug;
+		activeExecutable = 5E903D31132D69C400231F45 /* HGPageScrollViewSample */;
+		activeTarget = 1D6058900D05DD3D006BFB54 /* HGPageScrollViewSample */;
+		addToTargets = (
+			1D6058900D05DD3D006BFB54 /* HGPageScrollViewSample */,
+		);
+		codeSenseManager = 5E903D3A132D69C800231F45 /* Code sense */;
+		executables = (
+			5E903D31132D69C400231F45 /* HGPageScrollViewSample */,
+		);
+		perUserDictionary = {
+			PBXConfiguration.PBXFileTableDataSource3.PBXFileTableDataSource = {
+				PBXFileTableDataSourceColumnSortingDirectionKey = "-1";
+				PBXFileTableDataSourceColumnSortingKey = PBXFileDataSource_Filename_ColumnID;
+				PBXFileTableDataSourceColumnWidthsKey = (
+					20,
+					739,
+					20,
+					48.16259765625,
+					43,
+					43,
+					20,
+				);
+				PBXFileTableDataSourceColumnsKey = (
+					PBXFileDataSource_FiletypeID,
+					PBXFileDataSource_Filename_ColumnID,
+					PBXFileDataSource_Built_ColumnID,
+					PBXFileDataSource_ObjectSize_ColumnID,
+					PBXFileDataSource_Errors_ColumnID,
+					PBXFileDataSource_Warnings_ColumnID,
+					PBXFileDataSource_Target_ColumnID,
+				);
+			};
+			PBXPerProjectTemplateStateSaveDate = 321743300;
+			PBXWorkspaceStateSaveDate = 321743300;
+		};
+		perUserProjectItems = {
+			5E903D6B132D6B1900231F45 /* PBXTextBookmark */ = 5E903D6B132D6B1900231F45 /* PBXTextBookmark */;
+			5E903D6D132D6B1900231F45 /* PBXTextBookmark */ = 5E903D6D132D6B1900231F45 /* PBXTextBookmark */;
+			5E903D6F132D6B1900231F45 /* PBXTextBookmark */ = 5E903D6F132D6B1900231F45 /* PBXTextBookmark */;
+			5E903D70132D6B1900231F45 /* XCBuildMessageTextBookmark */ = 5E903D70132D6B1900231F45 /* XCBuildMessageTextBookmark */;
+			5E903D71132D6B1900231F45 /* PBXTextBookmark */ = 5E903D71132D6B1900231F45 /* PBXTextBookmark */;
+		};
+		sourceControlManager = 5E903D39132D69C800231F45 /* Source Control */;
+		userBuildSettings = {
+		};
+	};
+	5E903D31132D69C400231F45 /* HGPageScrollViewSample */ = {
+		isa = PBXExecutable;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		autoAttachOnCrash = 1;
+		breakpointsEnabled = 0;
+		configStateDict = {
+		};
+		customDataFormattersEnabled = 1;
+		dataTipCustomDataFormattersEnabled = 1;
+		dataTipShowTypeColumn = 1;
+		dataTipSortType = 0;
+		debuggerPlugin = GDBDebugging;
+		disassemblyDisplayState = 0;
+		dylibVariantSuffix = "";
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		executableSystemSymbolLevel = 0;
+		executableUserSymbolLevel = 0;
+		libgmallocEnabled = 0;
+		name = HGPageScrollViewSample;
+		showTypeColumn = 0;
+		sourceDirectories = (
+		);
+	};
+	5E903D39132D69C800231F45 /* Source Control */ = {
+		isa = PBXSourceControlManager;
+		fallbackIsa = XCSourceControlManager;
+		isSCMEnabled = 0;
+		scmConfiguration = {
+			repositoryNamesForRoots = {
+				"" = "";
+			};
+		};
+	};
+	5E903D3A132D69C800231F45 /* Code sense */ = {
+		isa = PBXCodeSenseManager;
+		indexTemplatePath = "";
+	};
+	5E903D6B132D6B1900231F45 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 5E903D6C132D6B1900231F45 /* HGPageScrollViewController.h */;
+		name = "HGPageScrollViewController.h: 32";
+		rLen = 161;
+		rLoc = 1374;
+		rType = 0;
+		vrLen = 482;
+		vrLoc = 1062;
+	};
+	5E903D6C132D6B1900231F45 /* HGPageScrollViewController.h */ = {
+		isa = PBXFileReference;
+		name = HGPageScrollViewController.h;
+		path = "/Users/Rotem/100grams/Development/Public/HGPageScrollViewSample-old/Classes/HGPageScrollViewController.h";
+		sourceTree = "<absolute>";
+	};
+	5E903D6D132D6B1900231F45 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 5E903D6E132D6B1900231F45 /* HGPageScrollViewController.m */;
+		name = "HGPageScrollViewController.m: 27";
+		rLen = 5655;
+		rLoc = 1241;
+		rType = 0;
+		vrLen = 692;
+		vrLoc = 988;
+	};
+	5E903D6E132D6B1900231F45 /* HGPageScrollViewController.m */ = {
+		isa = PBXFileReference;
+		name = HGPageScrollViewController.m;
+		path = "/Users/Rotem/100grams/Development/Public/HGPageScrollViewSample-old/Classes/HGPageScrollViewController.m";
+		sourceTree = "<absolute>";
+	};
+	5E903D6F132D6B1900231F45 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 28D7ACF70DDB3853001CB0EB /* HGPageScrollViewSampleViewController.m */;
+		name = "HGPageScrollViewSampleViewController.m: 30";
+		rLen = 0;
+		rLoc = 1301;
+		rType = 0;
+		vrLen = 825;
+		vrLoc = 973;
+	};
+	5E903D70132D6B1900231F45 /* XCBuildMessageTextBookmark */ = {
+		isa = PBXTextBookmark;
+		comments = "Cannot find protocol declaration for 'HGPageScrollViewDelegate'";
+		fRef = 28D7ACF60DDB3853001CB0EB /* HGPageScrollViewSampleViewController.h */;
+		fallbackIsa = XCBuildMessageTextBookmark;
+		rLen = 1;
+		rLoc = 32;
+		rType = 1;
+	};
+	5E903D71132D6B1900231F45 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 28D7ACF60DDB3853001CB0EB /* HGPageScrollViewSampleViewController.h */;
+		name = "HGPageScrollViewSampleViewController.h: 30";
+		rLen = 0;
+		rLoc = 1282;
+		rType = 0;
+		vrLen = 939;
+		vrLoc = 604;
+	};
+}

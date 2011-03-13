@@ -1,0 +1,44 @@
+//
+//  HGPageView.h
+//  HGPageDeckSample
+//
+//  Created by Rotem Rubnov on 11/3/2011.
+//  Copyright 2011 100 grams software.
+//
+//	Permission is hereby granted, free of charge, to any person obtaining a copy
+//	of this software and associated documentation files (the "Software"), to deal
+//	in the Software without restriction, including without limitation the rights
+//	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//	copies of the Software, and to permit persons to whom the Software is
+//	furnished to do so, subject to the following conditions:
+//
+//	The above copyright notice and this permission notice shall be included in
+//	all copies or substantial portions of the Software.
+//
+//	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//	THE SOFTWARE.
+//
+
+#import <UIKit/UIKit.h>
+
+
+@interface HGPageView : UIView {
+
+	@private
+	CGRect	  pageFrame;
+	CGRect	  _deckFrame;	
+	NSString *_reuseIdentifier;
+}
+
+@property (nonatomic,readwrite,copy) NSString *reuseIdentifier;
+@property (nonatomic, readwrite) CGRect pageFrame;
+@property (nonatomic, readwrite) CGRect deckFrame;
+
+- (void)prepareForReuse;    // if the page is reusable (has a reuse identifier), this is called just before the cell is returned from HGPageScrollView method dequeueReusablePageWithIdentifier:.  If you override, you MUST call super.
+
+@end
