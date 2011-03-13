@@ -6,7 +6,8 @@ HGPageScrollView uses a similar methodology to UITableView. It defines both a **
 
 Like UITableView, HGPageScrollView provides a way to improve performance by reusing pages. It maintains a queue of pages that the data source has marked for reuse. A page is marked for reuse by assigning a value to its *reuseIdentifier*.             
 
-![](https://github.com/100grams/HGPageScrollView/Screenshots/HGPageScrollView_Screen_shot_1.png) ![](https://github.com/100grams/HGPageScrollView/Screenshots/HGPageScrollView_Screen_shot_2.png)
+![](https://github.com/100grams/HGPageScrollView/raw/master/Screenshots/HGPageScrollView_Screen_shot_1.png) ![](http://github.com/100grams/HGPageScrollView/raw/master/Screenshots/HGPageScrollView_Screen_shot_2.png)
+
 
 
 ## Requirements ##
