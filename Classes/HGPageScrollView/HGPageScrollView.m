@@ -136,11 +136,11 @@
 	// load the data 
 	[self reloadData];
 
-	// set initial view mode
-	[self setViewMode:HGPageScrollViewModeDeck animated:NO];
-
 	// set initial selected page
 	_selectedPage = [_visiblePages objectAtIndex:0];
+
+	// set initial view mode
+	[self setViewMode:HGPageScrollViewModeDeck animated:NO];
 	
 	// set initial alpha values for all visible pages
 	[_visiblePages enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
@@ -213,8 +213,43 @@
 - (void) selectPageAtIndex : (NSInteger) index animated : (BOOL) animated;
 {
 	if (index != [self indexForSelectedPage]) {
-		[self scrollToPageAtIndex:index animated:animated];
+        
+        // rebuild _visibleIndexes
+        BOOL isLastPage = (index == _numberOfPages-1);
+        BOOL isFirstPage = (index == 0); 
+        NSInteger selectedVisibleIndex; 
+        if (_numberOfPages == 1) {
+            _visibleIndexes.location = index;
+            _visibleIndexes.length = 1;
+            selectedVisibleIndex = 0;
+        }
+        else if (isLastPage) {
+            _visibleIndexes.location = index-1;
+            _visibleIndexes.length = 2;
+            selectedVisibleIndex = 1;
+        }
+        else if(isFirstPage){
+            _visibleIndexes.location = index;
+            _visibleIndexes.length = 2;                
+            selectedVisibleIndex = 0;
+        }
+        else{
+            _visibleIndexes.location = index-1;
+            _visibleIndexes.length = 3;           
+            selectedVisibleIndex = 1;
+        }
+ 
+        // update the scrollView content offset
+        _scrollView.contentOffset = CGPointMake(index * _scrollView.frame.size.width, 0);
+
+        // reload the data for the new indexes
+        [self reloadData];
+        
+        // update _selectedPage
+        _selectedPage = [_visiblePages objectAtIndex:selectedVisibleIndex];
+            
 	}
+    
 	[self setViewMode:HGPageScrollViewModePage animated:animated];
 }
 
@@ -227,9 +262,9 @@
 
 - (void) setViewMode:(HGPageScrollViewMode)mode animated:(BOOL)animated;
 {
-	if (_viewMode == mode) {
-		return;
-	}
+//	if (_viewMode == mode) {
+//		return;
+//	}
 	
 	_viewMode = mode;
 	
@@ -250,8 +285,11 @@
 		}				
 		[_scrollView bringSubviewToFront:_selectedPage];
 		if ([self.dataSource respondsToSelector:@selector(pageScrollView:headerViewForPageAtIndex:)]) {
+            [_pageHeaderView removeFromSuperview]; 
+            [_pageHeaderView release]; 
 			//use the header view initialized by the dataSource 
-			_pageHeaderView = [self.dataSource pageScrollView:self headerViewForPageAtIndex:selectedIndex];
+			_pageHeaderView = [[self.dataSource pageScrollView:self headerViewForPageAtIndex:selectedIndex] retain];
+            [self addSubview : _pageHeaderView];
 		}
 		else { //use the default header view
 			[self initHeaderForPageAtIndex:selectedIndex]; 
@@ -355,6 +393,12 @@
 		[_pageSelector setNumberOfPages:_numberOfPages];
 				
 	}
+    
+    // reloading the data implicitely resets the viewMode to UIPageScrollViewModeDeck. 
+    // here we restore the view mode in case this is not the first time reloadData is called (i.e. if there if a _selectedPage).   
+    if (_selectedPage) { 
+        [self setViewMode:_viewMode animated:NO];
+    }
 }
 
 
@@ -561,11 +605,11 @@
 
 - (void) initDeckTitlesForPageAtIndex : (NSInteger) index;
 {
-	if ([self.dataSource respondsToSelector:@selector(pageScrollView:titleForViewAtIndex:)]) {
+	if ([self.dataSource respondsToSelector:@selector(pageScrollView:titleForPageAtIndex:)]) {
 		_pageDeckTitleLabel.text = [self.dataSource pageScrollView:self titleForPageAtIndex:index];
 	}
 
-	if ([self.dataSource respondsToSelector:@selector(pageScrollView:subtitleForViewAtIndex:)]) {
+	if ([self.dataSource respondsToSelector:@selector(pageScrollView:subtitleForPageAtIndex:)]) {
 		_pageDeckSubtitleLabel.text = [self.dataSource pageScrollView:self subtitleForPageAtIndex:index];
 	}
 	
