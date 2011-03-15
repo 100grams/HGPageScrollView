@@ -27,6 +27,7 @@
 
 #import "HGPageScrollViewSampleViewController.h"
 #import "MyPageData.h"
+#import "MyPageView.h"
 
 @implementation HGPageScrollViewSampleViewController
 
@@ -119,7 +120,7 @@
 {
 	static NSString *pageId = @"pageId";
 	
-	HGPageView *pageView = [scrollView dequeueReusablePageWithIdentifier:pageId];
+	MyPageView *pageView = (MyPageView*)[scrollView dequeueReusablePageWithIdentifier:pageId];
 	if (!pageView) {
 		pageView = [[[NSBundle mainBundle] loadNibNamed:@"MyPageView" owner:self options:nil] objectAtIndex:0]; 
 		pageView.reuseIdentifier = pageId;
@@ -134,25 +135,15 @@
 	UIImageView *imageView = (UIImageView*)[pageView viewWithTag:2];
 	imageView.image = pageData.image;
 	
-	UITextView *textView = (UITextView*)[pageView viewWithTag:3];
+	//UITextView *textView = (UITextView*)[pageView viewWithTag:3];
 	//	textView.text = pageData.description;
-	//adjust description text box to show all text
-	CGFloat margin = 12;
-	CGSize size = [textView.text sizeWithFont:textView.font
-							constrainedToSize:CGSizeMake(textView.frame.size.width, 2000) //very large height
-								lineBreakMode:UILineBreakModeWordWrap];
-	CGRect frame = textView.frame;
-	frame. size.height = size.height + 4*margin;
-	textView.frame = frame;
 	
 	//adjust content size of scroll view
-	UIScrollView *pageContentsScrollView = (UIScrollView*)[pageView viewWithTag:10];
-	pageContentsScrollView.contentSize = CGSizeMake(pageContentsScrollView.frame.size.width, frame.origin.y + frame.size.height);
-	
+	UIScrollView *pageContentsScrollView = (UIScrollView*)[pageView viewWithTag:10];	
 	pageContentsScrollView.scrollEnabled = NO; //initially disable scroll
 	
-	// finally adjust pageView frame
-	frame = pageView.frame;
+	// set the pageView frame height
+	CGRect frame = pageView.frame;
 	frame.size.height = 420; 
 	pageView.frame = frame; 
 	
@@ -175,21 +166,48 @@
 #pragma mark - 
 #pragma mark HGPageScrollViewDelegate
 
-- (void)pageScrollView:(HGPageScrollView *)scrollView didSelectPageAtIndex:(NSInteger)index;
+- (void)pageScrollView:(HGPageScrollView *)scrollView willSelectPageAtIndex:(NSInteger)index;
 {
-	//enable scroll on our MyPageView's scrollView, now that the pageScrollView is not visible
-	HGPageView *page = [scrollView pageAtIndex:index];
-	UIScrollView *scrollContentView = (UIScrollView*)[page viewWithTag:10];
-	scrollContentView.scrollEnabled = YES;
+	MyPageView *page = (MyPageView*)[scrollView pageAtIndex:index];
+    UIScrollView *pageContentsScrollView = (UIScrollView*)[page viewWithTag:10];
+
+    if (!page.isInitialized) {
+        // prepare the page for interaction. This is a "second step" initialization of the page 
+        // which we are deferring to just before the page is selected. While the page is initially
+        // requeseted (pageScrollView:viewForPageAtIndex:) this extra step is not required and is preferably 
+        // avoided due to performace reasons.  
+        
+        // asjust text box height to show all text
+        UITextView *textView = (UITextView*)[page viewWithTag:3];
+        CGFloat margin = 12;
+        CGSize size = [textView.text sizeWithFont:textView.font
+                                constrainedToSize:CGSizeMake(textView.frame.size.width, 2000) //very large height
+                                    lineBreakMode:UILineBreakModeWordWrap];
+        CGRect frame = textView.frame;
+        frame. size.height = size.height + 4*margin;
+        textView.frame = frame;
+        
+        // adjust content size of scroll view
+        pageContentsScrollView.contentSize = CGSizeMake(pageContentsScrollView.frame.size.width, frame.origin.y + frame.size.height);
+        
+        // mark the page as initialized, so that we don't have to do all of the above again 
+        // the next time this page is selected
+        page.isInitialized = YES;  
+    }
+    
+	// enable scroll
+	pageContentsScrollView.scrollEnabled = YES;
+    
 	
 }
 
 - (void)pageScrollView:(HGPageScrollView *)scrollView willDeselectPageAtIndex:(NSInteger)index;
 {
-	//disable scroll of the contents page to avoid conflict with horizonal scroll of the pageScrollView
+	// disable scroll of the contents page to avoid conflict with horizonal scroll of the pageScrollView
 	HGPageView *page = [scrollView pageAtIndex:index];
 	UIScrollView *scrollContentView = (UIScrollView*)[page viewWithTag:10];
 	scrollContentView.scrollEnabled = NO;
+
 }
 
 

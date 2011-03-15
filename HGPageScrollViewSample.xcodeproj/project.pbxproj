@@ -15,6 +15,7 @@
 		2899E5220DE3E06400AC0155 /* HGPageScrollViewSampleViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2899E5210DE3E06400AC0155 /* HGPageScrollViewSampleViewController.xib */; };
 		28AD733F0D9D9553002E5188 /* MainWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = 28AD733E0D9D9553002E5188 /* MainWindow.xib */; };
 		28D7ACF80DDB3853001CB0EB /* HGPageScrollViewSampleViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 28D7ACF70DDB3853001CB0EB /* HGPageScrollViewSampleViewController.m */; };
+		5E53C6FD132F956F005322CE /* MyPageView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E53C6FC132F956F005322CE /* MyPageView.m */; };
 		5E903D41132D69D300231F45 /* HGPageScrollView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E903D3D132D69D300231F45 /* HGPageScrollView.m */; };
 		5E903D42132D69D300231F45 /* HGPageScrollView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5E903D3E132D69D300231F45 /* HGPageScrollView.xib */; };
 		5E903D43132D69D300231F45 /* HGPageView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E903D40132D69D300231F45 /* HGPageView.m */; };
@@ -46,6 +47,8 @@
 		28D7ACF70DDB3853001CB0EB /* HGPageScrollViewSampleViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HGPageScrollViewSampleViewController.m; sourceTree = "<group>"; };
 		29B97316FDCFA39411CA2CEA /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		32CA4F630368D1EE00C91783 /* HGPageScrollViewSample_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HGPageScrollViewSample_Prefix.pch; sourceTree = "<group>"; };
+		5E53C6FB132F956F005322CE /* MyPageView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MyPageView.h; sourceTree = "<group>"; };
+		5E53C6FC132F956F005322CE /* MyPageView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MyPageView.m; sourceTree = "<group>"; };
 		5E903D3C132D69D300231F45 /* HGPageScrollView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HGPageScrollView.h; sourceTree = "<group>"; };
 		5E903D3D132D69D300231F45 /* HGPageScrollView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HGPageScrollView.m; sourceTree = "<group>"; };
 		5E903D3E132D69D300231F45 /* HGPageScrollView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = HGPageScrollView.xib; sourceTree = "<group>"; };
@@ -93,6 +96,8 @@
 				28D7ACF70DDB3853001CB0EB /* HGPageScrollViewSampleViewController.m */,
 				5E903D44132D69F500231F45 /* MyPageData.h */,
 				5E903D45132D69F500231F45 /* MyPageData.m */,
+				5E53C6FB132F956F005322CE /* MyPageView.h */,
+				5E53C6FC132F956F005322CE /* MyPageView.m */,
 			);
 			path = Classes;
 			sourceTree = "<group>";
@@ -257,6 +262,7 @@
 				5E903D41132D69D300231F45 /* HGPageScrollView.m in Sources */,
 				5E903D43132D69D300231F45 /* HGPageView.m in Sources */,
 				5E903D46132D69F500231F45 /* MyPageData.m in Sources */,
+				5E53C6FD132F956F005322CE /* MyPageView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -272,6 +278,7 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = HGPageScrollViewSample_Prefix.pch;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				INFOPLIST_FILE = "HGPageScrollViewSample-Info.plist";
 				PRODUCT_NAME = HGPageScrollViewSample;
 			};
@@ -284,6 +291,7 @@
 				COPY_PHASE_STRIP = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = HGPageScrollViewSample_Prefix.pch;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				INFOPLIST_FILE = "HGPageScrollViewSample-Info.plist";
 				PRODUCT_NAME = HGPageScrollViewSample;
 				VALIDATE_PRODUCT = YES;

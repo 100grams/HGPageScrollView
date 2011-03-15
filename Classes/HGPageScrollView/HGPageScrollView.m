@@ -51,6 +51,7 @@
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
 	if ([self pointInside:point withEvent:event]) {
 		return self.receiver;
+        NSLog(@"touched %@ receiver %@", self, [self receiver]);
 	}
 	return nil;
 }
@@ -115,7 +116,9 @@
 	[recognizer release];
 	
 	// setup scrollView
-	_scrollView.clipsToBounds = NO;	
+	_scrollView.decelerationRate = 1.0;//UIScrollViewDecelerationRateNormal;
+    _scrollView.delaysContentTouches = NO;
+    _scrollView.clipsToBounds = NO;	
 	_scrollView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight; 
 	_pageSelectorTouch.receiver = _pageSelector;
 	_scrollViewTouch.receiver = _scrollView;
@@ -391,18 +394,18 @@
 	page.frame = frame;
 	page.deckFrame = frame;
 
-	// add shadow
+	// add shadow (use shadowPath to improve rendering performance)
 	page.layer.shadowColor = [[UIColor blackColor] CGColor];	
 	page.layer.shadowOffset = CGSizeMake(8.0f, 12.0f);
 	page.layer.shadowOpacity = 0.3f;
+    page.layer.masksToBounds = NO;
+    UIBezierPath *path = [UIBezierPath bezierPathWithRect:page.bounds];
+    page.layer.shadowPath = path.CGPath;	
 	
-	// add to the page scroller
+    // add the page to the scroller
 	[_scrollView insertSubview:page atIndex:0];
 		
 //	NSLog(@"inserted page 0x%x at index %d offset=%f", page, index, contentOffset);
-
-//	contentOffset += _scrollView.frame.size.width;
-//	_scrollView.contentSize = CGSizeMake(contentOffset, _scrollView.frame.size.height);
 	
 
 }
@@ -534,7 +537,8 @@
 	CGFloat delta = _scrollView.contentOffset.x - page.frame.origin.x;
 	CGFloat step = self.frame.size.width;
 	CGFloat alpha = 1.0 - fabs(delta/step);
-	page.alpha = alpha;
+	if(alpha > 0.95) alpha = 1.0;
+    page.alpha = alpha;
 
 }
 
@@ -574,7 +578,7 @@
 	NSArray *reusables = [_reusablePages objectForKey:identifier];
 	if (reusables){
 		NSEnumerator *enumerator = [reusables objectEnumerator];
-		while (reusablePage = [enumerator nextObject]) {
+		while ((reusablePage = [enumerator nextObject])) {
 			if(![_visiblePages containsObject:reusablePage]){
 				[reusablePage prepareForReuse];
 				break;
