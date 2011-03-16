@@ -75,6 +75,7 @@
 // managing selection and scrolling
 - (void) updateVisiblePages;
 - (void) setAlphaForPage : (HGPageView*) page;
+- (void) preparePage : (HGPageView *) page forMode : (HGPageScrollViewMode) mode; 
 - (void) setViewMode:(HGPageScrollViewMode)mode animated:(BOOL)animated; //toggles selection/deselection
 
 // responding to actions 
@@ -129,32 +130,29 @@
 	// default number of pages 
 	_numberOfPages = 0;
 	
-	// set visible indexes
+	// set initial visible indexes (page 0)
 	_visibleIndexes.location = 0;
 	_visibleIndexes.length = 1;
 	
 	// load the data 
-	[self reloadData];
+	//[self reloadData];
 
 	// set initial selected page
-	_selectedPage = [_visiblePages objectAtIndex:0];
-
-	// set initial view mode
-	[self setViewMode:HGPageScrollViewModeDeck animated:NO];
+	//_selectedPage = [_visiblePages objectAtIndex:0];
 	
 	// set initial alpha values for all visible pages
-	[_visiblePages enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-		[self setAlphaForPage : obj];		
-	}];
+//	[_visiblePages enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+//		[self setAlphaForPage : obj];		
+//	}];
 	
 	// update deck title and subtitle for selected page
-	NSInteger index = [self indexForSelectedPage];
-	if ([self.dataSource respondsToSelector:@selector(pageScrollView:titleForPageAtIndex:)]) {
-		_pageDeckTitleLabel.text = [self.dataSource pageScrollView:self titleForPageAtIndex:index];
-	}
-	if ([self.dataSource respondsToSelector:@selector(pageScrollView:subtitleForPageAtIndex:)]) {
-		_pageDeckSubtitleLabel.text = [self.dataSource pageScrollView:self subtitleForPageAtIndex:index];
-	}		
+//	NSInteger index = [self indexForSelectedPage];
+//	if ([self.dataSource respondsToSelector:@selector(pageScrollView:titleForPageAtIndex:)]) {
+//		_pageDeckTitleLabel.text = [self.dataSource pageScrollView:self titleForPageAtIndex:index];
+//	}
+//	if ([self.dataSource respondsToSelector:@selector(pageScrollView:subtitleForPageAtIndex:)]) {
+//		_pageDeckSubtitleLabel.text = [self.dataSource pageScrollView:self subtitleForPageAtIndex:index];
+//	}		
 	
 
 }
@@ -247,7 +245,10 @@
         
         // update _selectedPage
         _selectedPage = [_visiblePages objectAtIndex:selectedVisibleIndex];
-            
+        
+        // update the page selector (pageControl)
+        [_pageSelector setCurrentPage:index];
+
 	}
     
 	[self setViewMode:HGPageScrollViewModePage animated:animated];
@@ -260,6 +261,19 @@
 }
 
 
+- (void) preparePage : (HGPageView *) page forMode : (HGPageScrollViewMode) mode 
+{
+    // When a page is presented in HGPageScrollViewModePage mode, it is scaled up and is moved to a different superview. 
+    // As it captures the full screen, it may be cropped to fit inside its new superview's frame. 
+    // So when moving it back to HGPageScrollViewModeDeck, we restore the page's proportions to prepare it to Deck mode.  
+	if (mode == HGPageScrollViewModeDeck && 
+        CGAffineTransformEqualToTransform(page.transform, CGAffineTransformIdentity)) {
+        page.frame = page.identityFrame;
+	}
+    
+}
+
+
 - (void) setViewMode:(HGPageScrollViewMode)mode animated:(BOOL)animated;
 {
 //	if (_viewMode == mode) {
@@ -268,13 +282,10 @@
 	
 	_viewMode = mode;
 	
-
-	if (mode == HGPageScrollViewModeDeck && CGAffineTransformEqualToTransform(_selectedPage.transform, CGAffineTransformIdentity) ) {
-		//perform this before any animations
-		[_scrollView addSubview:_selectedPage];
-		_selectedPage.frame = _selectedPage.pageFrame;
-	}
-	
+	if (_selectedPage) {
+        [self preparePage:_selectedPage forMode:mode];
+    }
+    
 	NSInteger selectedIndex = [self indexForSelectedPage];
 
 	void (^SelectBlock)(void) = (mode==HGPageScrollViewModePage)? ^{
@@ -295,13 +306,21 @@
 			[self initHeaderForPageAtIndex:selectedIndex]; 
 		}
 
-		// transform the selected pageView
-		_selectedPage.transform = CGAffineTransformIdentity;
-		CGRect frame = _selectedPage.frame;
+		// scale the page up to it 1:1 (identity) scale
+		_selectedPage.transform = CGAffineTransformIdentity; 
+		        
+        // adjust the frame
+        CGRect frame = _selectedPage.frame;
 		frame.origin.y = _pageHeaderView.frame.size.height - _scrollView.frame.origin.y;
+        
+        // store this frame for the backward animation
+        _selectedPage.identityFrame = frame; 
+
+        // finally crop frame to fit inside new superview (see CompletionBlock) 
 		frame.size.height = self.frame.size.height - _pageHeaderView.frame.size.height;
 		_selectedPage.frame = frame;
-		_selectedPage.pageFrame = frame;
+
+
 		
 		// reveal the page header view
 		_pageHeaderView.alpha = 1.0;
@@ -316,9 +335,13 @@
 		_pageDeckTitleLabel.hidden = NO;
 		_pageDeckSubtitleLabel.hidden = NO;
 		[self initDeckTitlesForPageAtIndex:selectedIndex];
+		// add the page back to the scrollView and transform it
+        [_scrollView addSubview:_selectedPage];
 		_selectedPage.transform = CGAffineTransformMakeScale(0.6, 0.6);	
-		_selectedPage.frame = _selectedPage.deckFrame; 
-		_pageHeaderView.alpha = 0.0;	
+ 		CGRect frame = _selectedPage.frame;
+        frame.origin.y = 0;
+        _selectedPage.frame = frame;
+        _pageHeaderView.alpha = 0.0;	
 		if ([self.delegate respondsToSelector:@selector(pageScrollView:willDeselectPageAtIndex:)]) {
 			[self.delegate pageScrollView:self willDeselectPageAtIndex:selectedIndex];
 		}		
@@ -332,8 +355,6 @@
 		_scrollView.scrollEnabled = NO;
 		_selectedPage.alpha = 1.0;
 		// copy _selectedPage up in the view hierarchy, to allow touch events on its entire frame 
-//		_selectedPageIdentityFrame = _selectedPage.frame;
-//		_selectedPageIdentityFrame.size.height = _selectedPageIdentityFrame.size.width*_scrollView.frame.size.height/_scrollView.frame.size.width;
 		_selectedPage.frame = CGRectMake(0, _pageHeaderView.frame.size.height, self.frame.size.width, _selectedPage.frame.size.height);
 		[self addSubview:_selectedPage];
 		// notify delegate
@@ -344,7 +365,7 @@
 		_scrollView.scrollEnabled = YES;				
 		//_scrollView.frame = CGRectMake(0, _scrollViewTouch.frame.origin.y, self.frame.size.width, _scrollViewTouch.frame.size.height);
 		[self addSubview:_scrollViewTouch];
-		[self addSubview: _pageSelectorTouch];	
+		[self addSubview: _pageSelectorTouch];
 		if ([self.delegate respondsToSelector:@selector(pageScrollView:didDeselectPageAtIndex:)]) {
 			[self.delegate pageScrollView:self didDeselectPageAtIndex:selectedIndex];
 		}		
@@ -396,7 +417,7 @@
     
     // reloading the data implicitely resets the viewMode to UIPageScrollViewModeDeck. 
     // here we restore the view mode in case this is not the first time reloadData is called (i.e. if there if a _selectedPage).   
-    if (_selectedPage) { 
+    if (_selectedPage && _viewMode==HGPageScrollViewModePage) { 
         [self setViewMode:_viewMode animated:NO];
     }
 }
@@ -428,6 +449,9 @@
 
 - (void) insertPageInScrollView : (HGPageView *) page atIndex : (NSInteger) index
 {
+    // inserting a page into the scroll view is in HGPageScrollViewModeDeck by definition (the scroll is the "deck")
+    [self preparePage:page forMode:HGPageScrollViewModeDeck];
+         
 	// configure the page frame
 	page.transform = CGAffineTransformMakeScale(0.6, 0.6);;
 	CGFloat contentOffset = index * _scrollView.frame.size.width;//_scrollView.contentSize.width;
@@ -436,7 +460,7 @@
 	frame.origin.x = contentOffset + margin;
 	frame.origin.y = 0.0;
 	page.frame = frame;
-	page.deckFrame = frame;
+
 
 	// add shadow (use shadowPath to improve rendering performance)
 	page.layer.shadowColor = [[UIColor blackColor] CGColor];	
@@ -449,7 +473,7 @@
     // add the page to the scroller
 	[_scrollView insertSubview:page atIndex:0];
 		
-//	NSLog(@"inserted page 0x%x at index %d offset=%f", page, index, contentOffset);
+	NSLog(@"inserted page 0x%x at index %d offset=%f, frame={%f,%f,%f,%f}", page, index, contentOffset, page.frame.origin.x, page.frame.origin.y, page.frame.size.width, page.frame.size.height);
 	
 
 }
@@ -464,12 +488,12 @@
 
 #pragma mark -
 #pragma mark UIScrollViewDelegate
-
+/*
 - (void) scrollViewWillBeginDragging:(UIScrollView *)scrollView
 {
 	_userInitiatedScroll = YES;
 }
-
+*/
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView
 {
@@ -483,9 +507,9 @@
 	
 	// update _selectedPage if the scroll was triggered by user swipe
 	// otherwise, i.e. if scroll was triggered in code, _selectedPage has already been updated.    
-	if (!_userInitiatedScroll) {
-		return;
-	}
+//	if (!_userInitiatedScroll) {
+//		return;
+//	}
 	
 	CGFloat delta = scrollView.contentOffset.x - _selectedPage.frame.origin.x;
 	BOOL toggleNextItem = (fabs(delta) > scrollView.frame.size.width / 2);
@@ -529,7 +553,8 @@
 	
 	// set selected page
 	_selectedPage = page;
-	
+	NSLog(@"selectedPage: 0x%x (%d)", page, index );
+    
 	// notify delegate again
 	if ([self.delegate respondsToSelector:@selector(pageScrollView:didScrollToPage:atIndex:)]) {
 		[self.delegate pageScrollView:self didScrollToPage:page atIndex:index];
@@ -639,7 +664,7 @@
 
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch
 {
-	if (_viewMode == HGPageScrollViewModeDeck) {
+	if (_viewMode == HGPageScrollViewModeDeck && !_scrollView.decelerating) {
 		return YES;	
 	}
 	return NO;	

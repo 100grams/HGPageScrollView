@@ -30,14 +30,12 @@
 @interface HGPageView : UIView {
 
 	@private
-	CGRect	  pageFrame;
-	CGRect	  _deckFrame;	
+	CGRect	  _identityFrame;
 	NSString *_reuseIdentifier;
 }
 
 @property (nonatomic,readwrite,copy) NSString *reuseIdentifier;
-@property (nonatomic, readwrite) CGRect pageFrame;
-@property (nonatomic, readwrite) CGRect deckFrame;
+@property (nonatomic, assign) CGRect identityFrame;
 
 - (void)prepareForReuse;    // if the page is reusable (has a reuse identifier), this is called just before the cell is returned from HGPageScrollView method dequeueReusablePageWithIdentifier:.  If you override, you MUST call super.
 

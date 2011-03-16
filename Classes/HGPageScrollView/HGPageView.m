@@ -30,14 +30,15 @@
 @implementation HGPageView
 
 @synthesize reuseIdentifier=_reuseIdentifier;
-@synthesize pageFrame=_pageFrame;
-@synthesize deckFrame=_deckFrame;
+@synthesize identityFrame=_identityFrame;
+
 
 - (id) initWithCoder:(NSCoder *)aDecoder
 {    
     self = [super initWithCoder:aDecoder];
     if (self) {
         // Initialization code.
+        _identityFrame = self.frame; //as it is defined in the XIB
     }
     return self;
 }
