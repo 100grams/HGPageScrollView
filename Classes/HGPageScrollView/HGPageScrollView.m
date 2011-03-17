@@ -128,7 +128,7 @@
 	[_pageSelector addTarget:self action:@selector(didChangePageValue:) forControlEvents:UIControlEventValueChanged];
 	
 	// default number of pages 
-	_numberOfPages = 0;
+	_numberOfPages = 1;
 	
 	// set initial visible indexes (page 0)
 	_visibleIndexes.location = 0;
@@ -140,18 +140,6 @@
 	// load the data 
 	[self reloadData];
 
-	// set initial selected page
-	_selectedPage = [_visiblePages objectAtIndex:0];
-		
-	// update deck title and subtitle for selected page
-	NSInteger index = [self indexForSelectedPage];
-	if ([self.dataSource respondsToSelector:@selector(pageScrollView:titleForPageAtIndex:)]) {
-		_pageDeckTitleLabel.text = [self.dataSource pageScrollView:self titleForPageAtIndex:index];
-	}
-	if ([self.dataSource respondsToSelector:@selector(pageScrollView:subtitleForPageAtIndex:)]) {
-		_pageDeckSubtitleLabel.text = [self.dataSource pageScrollView:self subtitleForPageAtIndex:index];
-	}		
-	
 
 }
 
@@ -342,13 +330,18 @@
 		_pageDeckTitleLabel.hidden = NO;
 		_pageDeckSubtitleLabel.hidden = NO;
 		[self initDeckTitlesForPageAtIndex:selectedIndex];
-		// add the page back to the scrollView and transform it
+		
+        // add the page back to the scrollView and transform it
         [_scrollView addSubview:_selectedPage];
 		_selectedPage.transform = CGAffineTransformMakeScale(0.6, 0.6);	
  		CGRect frame = _selectedPage.frame;
         frame.origin.y = 0;
         _selectedPage.frame = frame;
+
+        // hide the page header view
         _pageHeaderView.alpha = 0.0;	
+        
+        // notify the delegate
 		if ([self.delegate respondsToSelector:@selector(pageScrollView:willDeselectPageAtIndex:)]) {
 			[self.delegate pageScrollView:self willDeselectPageAtIndex:selectedIndex];
 		}		
@@ -391,7 +384,7 @@
 
 
 #pragma mark -
-#pragma mark Page Insertion and Loading
+#pragma mark PageScroller Data
 
 
 
@@ -407,6 +400,14 @@
 	// set pageScroller contentSize
 	_scrollView.contentSize = CGSizeMake(_numberOfPages * _scrollView.bounds.size.width, _scrollView.bounds.size.height);
 	
+    // hide view components initially
+    _pageHeaderView.alpha = 0.0;	
+    _pageDeckTitleLabel.hidden = YES;
+    _pageDeckSubtitleLabel.hidden = YES;
+    
+    // set page selector (page control)
+    [_pageSelector setNumberOfPages:_numberOfPages];
+
 	if (_numberOfPages > 0) {
 		
 		// reload visible pages
@@ -421,10 +422,26 @@
         [_visiblePages enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
             [self setAlphaForPage : obj];		
         }];
+		
+        // set initial selected page if necessary
+        if (!_selectedPage) {
+            _selectedPage = [_visiblePages objectAtIndex:0];
+            
+            // update deck title and subtitle for selected page
+            NSInteger index = [self indexForSelectedPage];
+            if ([self.dataSource respondsToSelector:@selector(pageScrollView:titleForPageAtIndex:)]) {
+                _pageDeckTitleLabel.text = [self.dataSource pageScrollView:self titleForPageAtIndex:index];
+            }
+            if ([self.dataSource respondsToSelector:@selector(pageScrollView:subtitleForPageAtIndex:)]) {
+                _pageDeckSubtitleLabel.text = [self.dataSource pageScrollView:self subtitleForPageAtIndex:index];
+            }	
+            
+            // show deck-mode title/subtitle
+            _pageDeckTitleLabel.hidden = NO;
+            _pageDeckSubtitleLabel.hidden = NO;
 
-		// set page selector (page control)
-		[_pageSelector setNumberOfPages:_numberOfPages];
-				
+        }
+
 	}
     
     // reloading the data implicitely resets the viewMode to UIPageScrollViewModeDeck. 
@@ -486,7 +503,7 @@
     // add the page to the scroller
 	[_scrollView insertSubview:page atIndex:0];
 		
-	NSLog(@"inserted page 0x%x at index %d offset=%f, frame={%f,%f,%f,%f}", page, index, contentOffset, page.frame.origin.x, page.frame.origin.y, page.frame.size.width, page.frame.size.height);
+//	NSLog(@"inserted page 0x%x at index %d offset=%f, frame={%f,%f,%f,%f}", page, index, contentOffset, page.frame.origin.x, page.frame.origin.y, page.frame.size.width, page.frame.size.height);
 	
 
 }
@@ -518,11 +535,6 @@
 		[self setAlphaForPage : obj];		
 	}];
 	
-	// update _selectedPage if the scroll was triggered by user swipe
-	// otherwise, i.e. if scroll was triggered in code, _selectedPage has already been updated.    
-//	if (!_userInitiatedScroll) {
-//		return;
-//	}
 	
 	CGFloat delta = scrollView.contentOffset.x - _selectedPage.frame.origin.x;
 	BOOL toggleNextItem = (fabs(delta) > scrollView.frame.size.width / 2);
@@ -566,7 +578,7 @@
 	
 	// set selected page
 	_selectedPage = page;
-	NSLog(@"selectedPage: 0x%x (index %d)", page, index );
+//	NSLog(@"selectedPage: 0x%x (index %d)", page, index );
     
 	// notify delegate again
 	if ([self.delegate respondsToSelector:@selector(pageScrollView:didScrollToPage:atIndex:)]) {
