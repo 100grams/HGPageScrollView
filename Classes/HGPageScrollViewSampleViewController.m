@@ -75,9 +75,8 @@
 	HGPageScrollView *pageScrollView = [[[NSBundle mainBundle] loadNibNamed:@"HGPageScrollView" owner:self options:nil] objectAtIndex:0];
 	[self.view addSubview:pageScrollView];
     
-    // select a page initially (e.g. page index can be loaded from persistent store and set here). For now choose page 0... 
-    // Note: this MUST be called for the pageScrollView to load its data from its delegate.  
-	[pageScrollView selectPageAtIndex:0 animated:NO];
+    // uncomment this line if you want to select a page initially, before HGPageScrollView is shown, 
+	//[pageScrollView selectPageAtIndex:0 animated:NO];
 }
 
 

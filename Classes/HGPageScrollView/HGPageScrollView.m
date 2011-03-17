@@ -134,25 +134,23 @@
 	_visibleIndexes.location = 0;
 	_visibleIndexes.length = 1;
 	
+    // set initial view mode
+    _viewMode = HGPageScrollViewModeDeck;
+    
 	// load the data 
-	//[self reloadData];
+	[self reloadData];
 
 	// set initial selected page
-	//_selectedPage = [_visiblePages objectAtIndex:0];
-	
-	// set initial alpha values for all visible pages
-//	[_visiblePages enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-//		[self setAlphaForPage : obj];		
-//	}];
-	
+	_selectedPage = [_visiblePages objectAtIndex:0];
+		
 	// update deck title and subtitle for selected page
-//	NSInteger index = [self indexForSelectedPage];
-//	if ([self.dataSource respondsToSelector:@selector(pageScrollView:titleForPageAtIndex:)]) {
-//		_pageDeckTitleLabel.text = [self.dataSource pageScrollView:self titleForPageAtIndex:index];
-//	}
-//	if ([self.dataSource respondsToSelector:@selector(pageScrollView:subtitleForPageAtIndex:)]) {
-//		_pageDeckSubtitleLabel.text = [self.dataSource pageScrollView:self subtitleForPageAtIndex:index];
-//	}		
+	NSInteger index = [self indexForSelectedPage];
+	if ([self.dataSource respondsToSelector:@selector(pageScrollView:titleForPageAtIndex:)]) {
+		_pageDeckTitleLabel.text = [self.dataSource pageScrollView:self titleForPageAtIndex:index];
+	}
+	if ([self.dataSource respondsToSelector:@selector(pageScrollView:subtitleForPageAtIndex:)]) {
+		_pageDeckSubtitleLabel.text = [self.dataSource pageScrollView:self subtitleForPageAtIndex:index];
+	}		
 	
 
 }
@@ -167,6 +165,15 @@
     [super dealloc];
 }
 
+
+#pragma mark -
+#pragma mark View Management
+
+- (void) setFrame:(CGRect)frame
+{
+    [super setFrame:frame];
+	_scrollView.contentSize = CGSizeMake(_numberOfPages * _scrollView.bounds.size.width, _scrollView.bounds.size.height);
+}
 
 
 #pragma mark -
@@ -276,9 +283,9 @@
 
 - (void) setViewMode:(HGPageScrollViewMode)mode animated:(BOOL)animated;
 {
-//	if (_viewMode == mode) {
-//		return;
-//	}
+	if (_viewMode == mode) {
+		return;
+	}
 	
 	_viewMode = mode;
 	
@@ -398,7 +405,7 @@
 	[_visiblePages removeAllObjects];
 	
 	// set pageScroller contentSize
-	_scrollView.contentSize = CGSizeMake(_numberOfPages * _scrollView.frame.size.width, _scrollView.frame.size.height);
+	_scrollView.contentSize = CGSizeMake(_numberOfPages * _scrollView.bounds.size.width, _scrollView.bounds.size.height);
 	
 	if (_numberOfPages > 0) {
 		
@@ -410,6 +417,11 @@
 		// this will load any additional views which become visible  
 		[self updateVisiblePages];
 		
+        // set initial alpha values for all visible pages
+        [_visiblePages enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+            [self setAlphaForPage : obj];		
+        }];
+
 		// set page selector (page control)
 		[_pageSelector setNumberOfPages:_numberOfPages];
 				
@@ -454,7 +466,7 @@
          
 	// configure the page frame
 	page.transform = CGAffineTransformMakeScale(0.6, 0.6);;
-	CGFloat contentOffset = index * _scrollView.frame.size.width;//_scrollView.contentSize.width;
+	CGFloat contentOffset = index * _scrollView.frame.size.width;
 	CGFloat margin = (_scrollView.frame.size.width - page.frame.size.width) / 2; 
 	CGRect frame = page.frame;
 	frame.origin.x = contentOffset + margin;
@@ -553,7 +565,7 @@
 	
 	// set selected page
 	_selectedPage = page;
-	NSLog(@"selectedPage: 0x%x (%d)", page, index );
+	NSLog(@"selectedPage: 0x%x (index %d)", page, index );
     
 	// notify delegate again
 	if ([self.delegate respondsToSelector:@selector(pageScrollView:didScrollToPage:atIndex:)]) {

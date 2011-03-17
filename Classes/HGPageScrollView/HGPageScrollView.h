@@ -45,7 +45,7 @@ typedef enum{
 
 @optional
 
-- (NSInteger)numberOfPagesInScrollView:(HGPageScrollView *)scrollView;   // Default is 0 if not implemented
+- (NSInteger)numberOfPagesInScrollView:(HGPageScrollView *)scrollView;   // Default is 1 if not implemented
 
 // you should re-use the UIView that you return here, only initialize it with appropriate values. 
 - (UIView *)pageScrollView:(HGPageScrollView *)scrollView headerViewForPageAtIndex:(NSInteger)index;  
