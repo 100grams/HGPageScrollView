@@ -430,7 +430,8 @@
     // reloading the data implicitely resets the viewMode to UIPageScrollViewModeDeck. 
     // here we restore the view mode in case this is not the first time reloadData is called (i.e. if there if a _selectedPage).   
     if (_selectedPage && _viewMode==HGPageScrollViewModePage) { 
-        [self setViewMode:_viewMode animated:NO];
+        _viewMode = HGPageScrollViewModeDeck;
+        [self setViewMode:HGPageScrollViewModePage animated:NO];
     }
 }
 
