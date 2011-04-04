@@ -97,6 +97,10 @@
 - (void) awakeFromNib{ 
 
 	[super awakeFromNib];
+    
+    // release IB reference (we do not want to keep a circular reference to our delegate & dataSource, or it will prevent them from properly deallocating). 
+    [_delegate release];
+    [_dataSource release];
 	
 	// init internal data structures
 	_visiblePages = [[NSMutableArray alloc] initWithCapacity:3];
@@ -285,6 +289,8 @@
 
 	void (^SelectBlock)(void) = (mode==HGPageScrollViewModePage)? ^{
 		
+        [[UIApplication sharedApplication] beginIgnoringInteractionEvents];
+        
 		// move to HGPageScrollViewModePage
 		if([self.delegate respondsToSelector:@selector(pageScrollView:willSelectPageAtIndex:)]) {
 			[self.delegate pageScrollView:self willSelectPageAtIndex:selectedIndex];
@@ -325,6 +331,8 @@
 		[_pageSelectorTouch removeFromSuperview];
 	} : ^{
 		
+        [[UIApplication sharedApplication] beginIgnoringInteractionEvents];
+
 		// move to HGPageScrollViewModeDeck
 		_pageSelector.hidden = NO;
 		_pageDeckTitleLabel.hidden = NO;
@@ -348,7 +356,10 @@
 	};
 	
 	void (^CompletionBlock)(BOOL) = (mode==HGPageScrollViewModePage)? ^(BOOL finished){
-		// set flags
+
+        [[UIApplication sharedApplication] endIgnoringInteractionEvents];
+
+        // set flags
 		_pageDeckTitleLabel.hidden = YES;
 		_pageDeckSubtitleLabel.hidden = YES;
 		_pageSelector.hidden = YES;
@@ -362,6 +373,9 @@
 			[self.delegate pageScrollView:self didSelectPageAtIndex:selectedIndex];
 		}		
 	} : ^(BOOL finished){
+
+        [[UIApplication sharedApplication] endIgnoringInteractionEvents];
+
 		_scrollView.scrollEnabled = YES;				
 		//_scrollView.frame = CGRectMake(0, _scrollViewTouch.frame.origin.y, self.frame.size.width, _scrollViewTouch.frame.size.height);
 		[self addSubview:_scrollViewTouch];
@@ -518,12 +532,46 @@
 
 #pragma mark -
 #pragma mark UIScrollViewDelegate
-/*
+
 - (void) scrollViewWillBeginDragging:(UIScrollView *)scrollView
 {
-	_userInitiatedScroll = YES;
+    if ([self.delegate respondsToSelector:@selector(pageScrollViewWillBeginDragging:)]) {
+        [self.delegate pageScrollViewWillBeginDragging:self];
+    }
 }
-*/
+
+
+- (void) scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate
+{
+    if ([self.delegate respondsToSelector:@selector(pageScrollViewDidEndDragging:willDecelerate:)]) {
+        [self.delegate pageScrollViewDidEndDragging:self willDecelerate:decelerate];
+    }
+
+    if (_isPendingScrolledPageUpdateNotification) {
+        if ([self.delegate respondsToSelector:@selector(pageScrollView:didScrollToPage:atIndex:)]) {
+            NSInteger selectedIndex = [_visiblePages indexOfObject:_selectedPage];
+            [self.delegate pageScrollView:self didScrollToPage:_selectedPage atIndex:selectedIndex];
+        }
+        _isPendingScrolledPageUpdateNotification = NO;
+    }
+}
+
+- (void)scrollViewWillBeginDecelerating:(UIScrollView *)scrollView
+{
+    if ([self.delegate respondsToSelector:@selector(pageScrollViewWillBeginDecelerating:)]) {
+        [self.delegate pageScrollViewWillBeginDecelerating:self];
+    }
+  
+}
+
+
+- (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
+{
+    if ([self.delegate respondsToSelector:@selector(pageScrollViewDidEndDecelerating:)]) {
+        [self.delegate pageScrollViewDidEndDecelerating:self];
+    }
+}
+
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView
 {
@@ -580,11 +628,16 @@
 	_selectedPage = page;
 //	NSLog(@"selectedPage: 0x%x (index %d)", page, index );
     
-	// notify delegate again
-	if ([self.delegate respondsToSelector:@selector(pageScrollView:didScrollToPage:atIndex:)]) {
-		[self.delegate pageScrollView:self didScrollToPage:page atIndex:index];
-	}		
-	
+    if (_scrollView.dragging) {
+        _isPendingScrolledPageUpdateNotification = YES;
+    }
+    else{
+        // notify delegate again
+        if ([self.delegate respondsToSelector:@selector(pageScrollView:didScrollToPage:atIndex:)]) {
+            [self.delegate pageScrollView:self didScrollToPage:page atIndex:index];
+        }
+        _isPendingScrolledPageUpdateNotification = NO;
+    }	
 }
 
 
@@ -689,7 +742,7 @@
 
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch
 {
-	if (_viewMode == HGPageScrollViewModeDeck && !_scrollView.decelerating) {
+	if (_viewMode == HGPageScrollViewModeDeck && !_scrollView.decelerating && !_scrollView.dragging) {
 		return YES;	
 	}
 	return NO;	

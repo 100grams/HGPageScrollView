@@ -63,6 +63,14 @@ typedef enum{
 
 @optional
 
+// Dragging
+- (void) pageScrollViewWillBeginDragging:(HGPageScrollView *)scrollView;
+- (void) pageScrollViewDidEndDragging:(HGPageScrollView *)scrollView willDecelerate:(BOOL)decelerate;
+
+// Decelaration
+- (void)pageScrollViewWillBeginDecelerating:(HGPageScrollView *)scrollView;
+- (void)pageScrollViewDidEndDecelerating:(HGPageScrollView *)scrollView;
+
 // Called before the page scrolls into the center of the view.
 - (void)pageScrollView:(HGPageScrollView *)scrollView willScrollToPage:(HGPageView*)page atIndex:(NSInteger)index;
 
@@ -114,10 +122,8 @@ typedef enum{
     NSMutableDictionary     *_reusablePages;
 	
 	HGPageView				*_selectedPage;
-	//CGRect					 _selectedPageTransformFrame;
-	BOOL					_userInitiatedScroll; 
 	
-
+    BOOL                    _isPendingScrolledPageUpdateNotification;
 }
 
 
@@ -142,7 +148,7 @@ typedef enum{
 // Appearance
 
 @property(nonatomic,readwrite, retain) UIView *pageHeaderView;				// Shown above page view in HGPageScrollViewModePage (when a single page is selected). Hidden in HGPageScrollViewModeDeck. Default is an empty view (white/opaque background) with title/subtitle labels.
-@property(nonatomic,readwrite, retain) UIView *pageDeckBackgroundView;     // Background the page deck (HGPageScrollViewModeDeck). Hidden in HGPageScrollViewModePage. Default takes a greyscale gradient.
+@property(nonatomic,readwrite, retain) UIView *pageDeckBackgroundView;     // Background of the page deck (HGPageScrollViewModeDeck). Hidden in HGPageScrollViewModePage. Default takes a greyscale gradient.
 
 @property (nonatomic, readonly)	HGPageScrollViewMode viewMode;
 
