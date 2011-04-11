@@ -104,7 +104,7 @@ typedef enum{
 	IBOutlet id <HGPageScrollViewDataSource>  _dataSource;
 
 	IBOutlet UIView			*_pageHeaderView;
-	
+    UIView                  *_userHeaderView; 
 	IBOutlet UIView			*_pageDeckBackgroundView;
 	
 	IBOutlet UILabel		*_pageDeckTitleLabel;
@@ -122,7 +122,7 @@ typedef enum{
     NSMutableDictionary     *_reusablePages;
 	
 	HGPageView				*_selectedPage;
-	
+    
     BOOL                    _isPendingScrolledPageUpdateNotification;
 }
 

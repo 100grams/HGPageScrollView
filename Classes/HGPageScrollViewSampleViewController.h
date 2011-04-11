@@ -32,9 +32,12 @@
 
 @interface HGPageScrollViewSampleViewController : UIViewController <HGPageScrollViewDelegate, HGPageScrollViewDataSource> {
 		
-	NSMutableArray *_myPageDataArray;
+	HGPageScrollView *_myPageScrollView;
+    NSMutableArray   *_myPageDataArray;
 	
 	IBOutlet UIToolbar *toolbar;
+        
+    UINavigationController *_myNavController;
 }
 
 @end

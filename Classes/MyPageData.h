@@ -26,9 +26,9 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "PageHeaderInfo.h"
 
-
-@interface MyPageData : NSObject {
+@interface MyPageData : NSObject <PageHeaderInfo> {
 
 }
 

@@ -28,6 +28,13 @@
 #import "HGPageScrollViewSampleViewController.h"
 #import "MyPageData.h"
 #import "MyPageView.h"
+#import "MyTableViewController.h"
+
+
+@interface HGPageScrollViewSampleViewController(internal)
+- (UIViewController*) headerInfoForPageAtIndex : (NSInteger) index;
+@end
+
 
 @implementation HGPageScrollViewSampleViewController
 
@@ -67,19 +74,19 @@
 		[_myPageDataArray addObject:pageData];
 	}
 	
-	UIBarButtonItem *barButton = [[UIBarButtonItem alloc] initWithTitle:[NSString stringWithFormat:@"%d", [_myPageDataArray count]] style:UIBarButtonItemStyleBordered target:self action:@selector(didClickBrowsePages:)];
-	//barButton.frame = CGRect();
-	[toolbar setItems:[NSArray arrayWithObject:barButton] animated:NO];
+	UIBarButtonItem *buttonItem = [[[UIBarButtonItem alloc] initWithTitle:[NSString stringWithFormat:@"%d", [_myPageDataArray count]] style:UIBarButtonItemStyleBordered target:self action:@selector(didClickBrowsePages:)] autorelease];
+
+	[toolbar setItems:[NSArray arrayWithObject:buttonItem] animated:NO];
 	
 	// now that we have the data, initialize the page scroll view
-	HGPageScrollView *pageScrollView = [[[NSBundle mainBundle] loadNibNamed:@"HGPageScrollView" owner:self options:nil] objectAtIndex:0];
-	[self.view addSubview:pageScrollView];
+	_myPageScrollView = [[[NSBundle mainBundle] loadNibNamed:@"HGPageScrollView" owner:self options:nil] objectAtIndex:0];
+	[self.view addSubview:_myPageScrollView];
+    
     
     // uncomment this line if you want to select a page initially, before HGPageScrollView is shown, 
 	//[pageScrollView selectPageAtIndex:0 animated:NO];
+        
 }
-
-
 
 /*
  // Override to allow orientations other than the default portrait orientation.
@@ -103,12 +110,13 @@
 
 
 - (void)dealloc {
+    [_myNavController release];
 	[_myPageDataArray release];
     [super dealloc];
 }
 
 
-#pragma mark - 
+#pragma mark -
 #pragma mark HGPageScrollViewDataSource
 
 
@@ -118,97 +126,147 @@
 }
 
 
-- (HGPageView *)pageScrollView:(HGPageScrollView *)scrollView viewForPageAtIndex:(NSInteger)index;
+- (UIView *)pageScrollView:(HGPageScrollView *)scrollView headerViewForPageAtIndex:(NSInteger)index;  
 {
-	static NSString *pageId = @"pageId";
+    if (index == 0) {
+        UIView *navBarCopy = [[[UINavigationBar alloc] initWithFrame:_myNavController.navigationBar.frame] autorelease];
+        return navBarCopy;
+    }
+        
+    return nil;
+}
+
+
+- (HGPageView *)pageScrollView:(HGPageScrollView *)scrollView viewForPageAtIndex:(NSInteger)index;
+{    
+    
+    if (index == 0) {
+        if (!_myNavController) {
+            MyTableViewController *myViewController = [[[MyTableViewController alloc] initWithNibName:@"MyTableViewController" bundle:nil] autorelease];
+            _myNavController = [[UINavigationController alloc] initWithRootViewController:myViewController];
+            [_myNavController setToolbarHidden:NO];
+        }
+        return (HGPageView*)_myNavController.topViewController.view;
+    }
+    else{
+        static NSString *pageId = @"pageId";
+        MyPageView *pageView = (MyPageView*)[scrollView dequeueReusablePageWithIdentifier:pageId];
+        if (!pageView) {
+            pageView = [[[NSBundle mainBundle] loadNibNamed:@"MyPageView" owner:self options:nil] objectAtIndex:0]; 
+            pageView.reuseIdentifier = pageId;
+        }
+        
+        // configure the page
+        MyPageData *pageData = [_myPageDataArray objectAtIndex:index];
+        
+        UILabel *titleLabel = (UILabel*)[pageView viewWithTag:1];
+        titleLabel.text = pageData.title;
+        
+        UIImageView *imageView = (UIImageView*)[pageView viewWithTag:2];
+        imageView.image = pageData.image;
+        
+        //UITextView *textView = (UITextView*)[pageView viewWithTag:3];
+        //	textView.text = pageData.description;
+        
+        //adjust content size of scroll view
+        UIScrollView *pageContentsScrollView = (UIScrollView*)[pageView viewWithTag:10];	
+        pageContentsScrollView.scrollEnabled = NO; //initially disable scroll
+        
+        // set the pageView frame height
+        CGRect frame = pageView.frame;
+        frame.size.height = 420; 
+        pageView.frame = frame; 
+        return pageView;
+        
+    }
 	
-	MyPageView *pageView = (MyPageView*)[scrollView dequeueReusablePageWithIdentifier:pageId];
-	if (!pageView) {
-		pageView = [[[NSBundle mainBundle] loadNibNamed:@"MyPageView" owner:self options:nil] objectAtIndex:0]; 
-		pageView.reuseIdentifier = pageId;
-	}
-	
-	// configure the page
-	MyPageData *pageData = [_myPageDataArray objectAtIndex:index];
-	
-	UILabel *titleLabel = (UILabel*)[pageView viewWithTag:1];
-	titleLabel.text = pageData.title;
-	
-	UIImageView *imageView = (UIImageView*)[pageView viewWithTag:2];
-	imageView.image = pageData.image;
-	
-	//UITextView *textView = (UITextView*)[pageView viewWithTag:3];
-	//	textView.text = pageData.description;
-	
-	//adjust content size of scroll view
-	UIScrollView *pageContentsScrollView = (UIScrollView*)[pageView viewWithTag:10];	
-	pageContentsScrollView.scrollEnabled = NO; //initially disable scroll
-	
-	// set the pageView frame height
-	CGRect frame = pageView.frame;
-	frame.size.height = 420; 
-	pageView.frame = frame; 
-	
-	return pageView;
 }
 
 
 - (NSString *)pageScrollView:(HGPageScrollView *)scrollView titleForPageAtIndex:(NSInteger)index;  
 {
-	return ((MyPageData*)[_myPageDataArray objectAtIndex:index]).title;
+    id<PageHeaderInfo> headerInfo = (id<PageHeaderInfo>)[self headerInfoForPageAtIndex:index]; 
+    return [headerInfo pageTitle];
+        
 }
 
 - (NSString *)pageScrollView:(HGPageScrollView *)scrollView subtitleForPageAtIndex:(NSInteger)index;  
 {
-	return ((MyPageData*)[_myPageDataArray objectAtIndex:index]).subtitle;
+    id<PageHeaderInfo> headerInfo = (id<PageHeaderInfo>)[self headerInfoForPageAtIndex:index]; 
+    return [headerInfo pageSubtitle];
 }
 
 
+- (UIViewController*) headerInfoForPageAtIndex : (NSInteger) index
+{
+    if (index == 0) {
+        // in this sample project, the page at index 0 is a navigation controller. 
+        return _myNavController.topViewController;
+    }
+    else{
+        return [_myPageDataArray objectAtIndex:index];        
+    }
+}
 
 #pragma mark - 
 #pragma mark HGPageScrollViewDelegate
 
 - (void)pageScrollView:(HGPageScrollView *)scrollView willSelectPageAtIndex:(NSInteger)index;
 {
-	MyPageView *page = (MyPageView*)[scrollView pageAtIndex:index];
-    UIScrollView *pageContentsScrollView = (UIScrollView*)[page viewWithTag:10];
-
-    if (!page.isInitialized) {
-        // prepare the page for interaction. This is a "second step" initialization of the page 
-        // which we are deferring to just before the page is selected. While the page is initially
-        // requeseted (pageScrollView:viewForPageAtIndex:) this extra step is not required and is preferably 
-        // avoided due to performace reasons.  
+    if (index > 0) {
+        MyPageView *page = (MyPageView*)[scrollView pageAtIndex:index];
+        UIScrollView *pageContentsScrollView = (UIScrollView*)[page viewWithTag:10];
         
-        // asjust text box height to show all text
-        UITextView *textView = (UITextView*)[page viewWithTag:3];
-        CGFloat margin = 12;
-        CGSize size = [textView.text sizeWithFont:textView.font
-                                constrainedToSize:CGSizeMake(textView.frame.size.width, 2000) //very large height
-                                    lineBreakMode:UILineBreakModeWordWrap];
-        CGRect frame = textView.frame;
-        frame. size.height = size.height + 4*margin;
-        textView.frame = frame;
+        if (!page.isInitialized) {
+            // prepare the page for interaction. This is a "second step" initialization of the page 
+            // which we are deferring to just before the page is selected. While the page is initially
+            // requeseted (pageScrollView:viewForPageAtIndex:) this extra step is not required and is preferably 
+            // avoided due to performace reasons.  
+            
+            // asjust text box height to show all text
+            UITextView *textView = (UITextView*)[page viewWithTag:3];
+            CGFloat margin = 12;
+            CGSize size = [textView.text sizeWithFont:textView.font
+                                    constrainedToSize:CGSizeMake(textView.frame.size.width, 2000) //very large height
+                                        lineBreakMode:UILineBreakModeWordWrap];
+            CGRect frame = textView.frame;
+            frame. size.height = size.height + 4*margin;
+            textView.frame = frame;
+            
+            // adjust content size of scroll view
+            pageContentsScrollView.contentSize = CGSizeMake(pageContentsScrollView.frame.size.width, frame.origin.y + frame.size.height);
+            
+            // mark the page as initialized, so that we don't have to do all of the above again 
+            // the next time this page is selected
+            page.isInitialized = YES;  
+        }
         
-        // adjust content size of scroll view
-        pageContentsScrollView.contentSize = CGSizeMake(pageContentsScrollView.frame.size.width, frame.origin.y + frame.size.height);
+        // enable scroll
+        pageContentsScrollView.scrollEnabled = YES;
         
-        // mark the page as initialized, so that we don't have to do all of the above again 
-        // the next time this page is selected
-        page.isInitialized = YES;  
     }
-    
-	// enable scroll
-	pageContentsScrollView.scrollEnabled = YES;
     
 	
 }
 
+- (void) pageScrollView:(HGPageScrollView *)scrollView didSelectPageAtIndex:(NSInteger)index
+{
+    if (index == 0) {
+        // copy the toolbar items to the navigation controller
+        [_myNavController.topViewController setToolbarItems:toolbar.items];
+        self.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
+        [self presentModalViewController:_myNavController animated:NO];
+    }
+}
+
 - (void)pageScrollView:(HGPageScrollView *)scrollView willDeselectPageAtIndex:(NSInteger)index;
 {
-	// disable scroll of the contents page to avoid conflict with horizonal scroll of the pageScrollView
-	HGPageView *page = [scrollView pageAtIndex:index];
-	UIScrollView *scrollContentView = (UIScrollView*)[page viewWithTag:10];
-	scrollContentView.scrollEnabled = NO;
+    if (index > 0) {
+        // disable scroll of the contents page to avoid conflict with horizonal scroll of the pageScrollView
+        HGPageView *page = [scrollView pageAtIndex:index];
+        UIScrollView *scrollContentView = (UIScrollView*)[page viewWithTag:10];
+        scrollContentView.scrollEnabled = NO;
+    }
 
 }
 
@@ -218,6 +276,12 @@
 {
 	HGPageScrollView *pageScrollView = [[self.view subviews] lastObject];
 	
+    if (self.modalViewController) {
+        [self dismissModalViewControllerAnimated:NO];
+        // copy the toolbar items back to our own toolbar
+        [toolbar setItems:[NSArray arrayWithArray : _myNavController.topViewController.toolbarItems]];
+    }
+    
 	if(pageScrollView.viewMode == HGPageScrollViewModePage){  
 		[pageScrollView deselectPageAnimated:YES];
 	}

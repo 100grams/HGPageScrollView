@@ -16,6 +16,10 @@
 		28D7ACF80DDB3853001CB0EB /* HGPageScrollViewSampleViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 28D7ACF70DDB3853001CB0EB /* HGPageScrollViewSampleViewController.m */; };
 		5E53C6FD132F956F005322CE /* MyPageView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E53C6FC132F956F005322CE /* MyPageView.m */; };
 		5E53C764132FBC61005322CE /* MainWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5E53C763132FBC61005322CE /* MainWindow.xib */; };
+		5E78B098134C8B4F00633F0F /* MyTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E78B096134C8B4F00633F0F /* MyTableViewController.m */; };
+		5E78B099134C8B4F00633F0F /* MyTableViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5E78B097134C8B4F00633F0F /* MyTableViewController.xib */; };
+		5E78B09D134C8CFC00633F0F /* MyDetailViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E78B09B134C8CFB00633F0F /* MyDetailViewController.m */; };
+		5E78B09E134C8CFC00633F0F /* MyDetailViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5E78B09C134C8CFB00633F0F /* MyDetailViewController.xib */; };
 		5E903D41132D69D300231F45 /* HGPageScrollView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E903D3D132D69D300231F45 /* HGPageScrollView.m */; };
 		5E903D42132D69D300231F45 /* HGPageScrollView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5E903D3E132D69D300231F45 /* HGPageScrollView.xib */; };
 		5E903D43132D69D300231F45 /* HGPageView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E903D40132D69D300231F45 /* HGPageView.m */; };
@@ -49,6 +53,13 @@
 		5E53C6FB132F956F005322CE /* MyPageView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MyPageView.h; sourceTree = "<group>"; };
 		5E53C6FC132F956F005322CE /* MyPageView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MyPageView.m; sourceTree = "<group>"; };
 		5E53C763132FBC61005322CE /* MainWindow.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = MainWindow.xib; sourceTree = "<group>"; };
+		5E78B095134C8B4F00633F0F /* MyTableViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MyTableViewController.h; path = Navigation/MyTableViewController.h; sourceTree = "<group>"; };
+		5E78B096134C8B4F00633F0F /* MyTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MyTableViewController.m; path = Navigation/MyTableViewController.m; sourceTree = "<group>"; };
+		5E78B097134C8B4F00633F0F /* MyTableViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = MyTableViewController.xib; path = Navigation/MyTableViewController.xib; sourceTree = "<group>"; };
+		5E78B09A134C8CFB00633F0F /* MyDetailViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MyDetailViewController.h; path = Navigation/MyDetailViewController.h; sourceTree = "<group>"; };
+		5E78B09B134C8CFB00633F0F /* MyDetailViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MyDetailViewController.m; path = Navigation/MyDetailViewController.m; sourceTree = "<group>"; };
+		5E78B09C134C8CFB00633F0F /* MyDetailViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = MyDetailViewController.xib; path = Navigation/MyDetailViewController.xib; sourceTree = "<group>"; };
+		5E8D6950135391F600E5F9B0 /* PageHeaderInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PageHeaderInfo.h; sourceTree = "<group>"; };
 		5E903D3C132D69D300231F45 /* HGPageScrollView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HGPageScrollView.h; sourceTree = "<group>"; };
 		5E903D3D132D69D300231F45 /* HGPageScrollView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HGPageScrollView.m; sourceTree = "<group>"; };
 		5E903D3E132D69D300231F45 /* HGPageScrollView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = HGPageScrollView.xib; sourceTree = "<group>"; };
@@ -89,11 +100,13 @@
 		080E96DDFE201D6D7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				5E78B094134C8A8400633F0F /* Navigation */,
 				5E903D3B132D69D300231F45 /* HGPageScrollView */,
 				1D3623240D0F684500981E51 /* HGPageScrollViewSampleAppDelegate.h */,
 				1D3623250D0F684500981E51 /* HGPageScrollViewSampleAppDelegate.m */,
 				28D7ACF60DDB3853001CB0EB /* HGPageScrollViewSampleViewController.h */,
 				28D7ACF70DDB3853001CB0EB /* HGPageScrollViewSampleViewController.m */,
+				5E8D6950135391F600E5F9B0 /* PageHeaderInfo.h */,
 				5E903D44132D69F500231F45 /* MyPageData.h */,
 				5E903D45132D69F500231F45 /* MyPageData.m */,
 				5E53C6FB132F956F005322CE /* MyPageView.h */,
@@ -152,6 +165,19 @@
 				5E903D63132D6AF800231F45 /* QuartzCore.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		5E78B094134C8A8400633F0F /* Navigation */ = {
+			isa = PBXGroup;
+			children = (
+				5E78B095134C8B4F00633F0F /* MyTableViewController.h */,
+				5E78B096134C8B4F00633F0F /* MyTableViewController.m */,
+				5E78B097134C8B4F00633F0F /* MyTableViewController.xib */,
+				5E78B09A134C8CFB00633F0F /* MyDetailViewController.h */,
+				5E78B09B134C8CFB00633F0F /* MyDetailViewController.m */,
+				5E78B09C134C8CFB00633F0F /* MyDetailViewController.xib */,
+			);
+			name = Navigation;
 			sourceTree = "<group>";
 		};
 		5E903D3B132D69D300231F45 /* HGPageScrollView */ = {
@@ -246,6 +272,8 @@
 				5E903D5C132D6A4E00231F45 /* image8.png in Resources */,
 				5E903D5D132D6A4E00231F45 /* image9.png in Resources */,
 				5E53C764132FBC61005322CE /* MainWindow.xib in Resources */,
+				5E78B099134C8B4F00633F0F /* MyTableViewController.xib in Resources */,
+				5E78B09E134C8CFC00633F0F /* MyDetailViewController.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -263,6 +291,8 @@
 				5E903D43132D69D300231F45 /* HGPageView.m in Sources */,
 				5E903D46132D69F500231F45 /* MyPageData.m in Sources */,
 				5E53C6FD132F956F005322CE /* MyPageView.m in Sources */,
+				5E78B098134C8B4F00633F0F /* MyTableViewController.m in Sources */,
+				5E78B09D134C8CFC00633F0F /* MyDetailViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -303,7 +333,9 @@
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Rotem Rubnov (8C3XJJ4HV9)";
+				COPY_PHASE_STRIP = NO;
 				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				PREBINDING = NO;
@@ -317,6 +349,7 @@
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Rotem Rubnov (8C3XJJ4HV9)";
+				COPY_PHASE_STRIP = NO;
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;

@@ -1,9 +1,9 @@
 //
-//  MyPageData.m
-//  HGPageDeckSample
+//  PageHeaderInfo.h
+//  HGPageScrollViewSample
 //
-//  Created by Rotem Rubnov on 12/3/2011.
-//	Copyright (C) ___YEAR___ ___ORGANIZATIONNAME___
+//  Created by Rotem Rubnov on 11/4/2011.
+//  Copyright 2011 100 grams. All rights reserved.
 //
 //	Permission is hereby granted, free of charge, to any person obtaining a copy
 //	of this software and associated documentation files (the "Software"), to deal
@@ -23,29 +23,14 @@
 //	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //	THE SOFTWARE.
 //
-//
 
-#import "MyPageData.h"
-
-
-@implementation MyPageData
-
-@synthesize title, subtitle, image, description; 
+#import <Foundation/Foundation.h>
 
 
-#pragma mark - PageScrollerHeaderInfo
 
-- (NSString*) pageTitle
-{
-    return self.title;
-}
-
-
-- (NSString*) pageSubtitle
-{
-    return self.subtitle;
-}
-
-
+@protocol PageHeaderInfo <NSObject>
+@optional
+- (NSString*) pageTitle; 
+- (NSString*) pageSubtitle;
 
 @end

@@ -68,7 +68,7 @@
 - (void) initDeckTitlesForPageAtIndex : (NSInteger) index;
 
 // managing pages
-- (void) loadPageAtIndex : (NSInteger) index insertIntoVisibleIndex : (NSInteger) visibleIndex;
+- (HGPageView*) loadPageAtIndex : (NSInteger) index insertIntoVisibleIndex : (NSInteger) visibleIndex;
 - (void) insertPageInScrollView : (HGPageView *) page atIndex : (NSInteger) index;
 - (void) updateScrolledPage : (HGPageView*) page index : (NSInteger) index;
 
@@ -256,6 +256,13 @@
 
 - (void) deselectPageAnimated : (BOOL) animated;
 {
+    NSInteger visibleIndex = [_visiblePages indexOfObject:_selectedPage];
+    NSInteger selectedPageScrollIndex = [self indexForSelectedPage];
+    CGRect identityFrame = _selectedPage.identityFrame;
+    [_visiblePages removeObject:_selectedPage];
+    _selectedPage = [self loadPageAtIndex:selectedPageScrollIndex insertIntoVisibleIndex:visibleIndex];
+    _selectedPage.identityFrame = identityFrame;
+    
 	[self setViewMode:HGPageScrollViewModeDeck animated:animated];
 }
 
@@ -287,9 +294,12 @@
     
 	NSInteger selectedIndex = [self indexForSelectedPage];
 
+
 	void (^SelectBlock)(void) = (mode==HGPageScrollViewModePage)? ^{
 		
         [[UIApplication sharedApplication] beginIgnoringInteractionEvents];
+
+        UIView *headerView = _pageHeaderView;
         
 		// move to HGPageScrollViewModePage
 		if([self.delegate respondsToSelector:@selector(pageScrollView:willSelectPageAtIndex:)]) {
@@ -297,13 +307,27 @@
 		}				
 		[_scrollView bringSubviewToFront:_selectedPage];
 		if ([self.dataSource respondsToSelector:@selector(pageScrollView:headerViewForPageAtIndex:)]) {
-            [_pageHeaderView removeFromSuperview]; 
-            [_pageHeaderView release]; 
-			//use the header view initialized by the dataSource 
-			_pageHeaderView = [[self.dataSource pageScrollView:self headerViewForPageAtIndex:selectedIndex] retain];
-            [self addSubview : _pageHeaderView];
+            UIView *altHeaderView = [self.dataSource pageScrollView:self headerViewForPageAtIndex:selectedIndex];
+            [_userHeaderView removeFromSuperview];
+            [_userHeaderView release];
+            _userHeaderView = nil;
+           if (altHeaderView) {
+               //use the header view initialized by the dataSource 
+               _pageHeaderView.hidden = YES; 
+               _userHeaderView = [altHeaderView retain];
+               CGRect frame = _userHeaderView.frame;
+               frame.origin.y = 0;
+               _userHeaderView.frame = frame; 
+               headerView = _userHeaderView;
+               [self addSubview : _userHeaderView];
+            }
+            else{
+                _pageHeaderView.hidden = NO; 
+                [self initHeaderForPageAtIndex:selectedIndex];
+            }
 		}
 		else { //use the default header view
+            _pageHeaderView.hidden = NO; 
 			[self initHeaderForPageAtIndex:selectedIndex]; 
 		}
 
@@ -312,19 +336,19 @@
 		        
         // adjust the frame
         CGRect frame = _selectedPage.frame;
-		frame.origin.y = _pageHeaderView.frame.size.height - _scrollView.frame.origin.y;
+		frame.origin.y = headerView.frame.size.height - _scrollView.frame.origin.y;
         
         // store this frame for the backward animation
         _selectedPage.identityFrame = frame; 
 
         // finally crop frame to fit inside new superview (see CompletionBlock) 
-		frame.size.height = self.frame.size.height - _pageHeaderView.frame.size.height;
+		frame.size.height = self.frame.size.height - headerView.frame.size.height;
 		_selectedPage.frame = frame;
 
 
 		
 		// reveal the page header view
-		_pageHeaderView.alpha = 1.0;
+		headerView.alpha = 1.0;
 		
 		//remove unnecessary views
 		[_scrollViewTouch removeFromSuperview];
@@ -333,6 +357,8 @@
 		
         [[UIApplication sharedApplication] beginIgnoringInteractionEvents];
 
+        UIView *headerView = _userHeaderView?_userHeaderView:_pageHeaderView;
+        
 		// move to HGPageScrollViewModeDeck
 		_pageSelector.hidden = NO;
 		_pageDeckTitleLabel.hidden = NO;
@@ -347,7 +373,7 @@
         _selectedPage.frame = frame;
 
         // hide the page header view
-        _pageHeaderView.alpha = 0.0;	
+        headerView.alpha = 0.0;	
         
         // notify the delegate
 		if ([self.delegate respondsToSelector:@selector(pageScrollView:willDeselectPageAtIndex:)]) {
@@ -359,6 +385,8 @@
 
         [[UIApplication sharedApplication] endIgnoringInteractionEvents];
 
+        UIView *headerView = _userHeaderView?_userHeaderView:_pageHeaderView;
+
         // set flags
 		_pageDeckTitleLabel.hidden = YES;
 		_pageDeckSubtitleLabel.hidden = YES;
@@ -366,7 +394,7 @@
 		_scrollView.scrollEnabled = NO;
 		_selectedPage.alpha = 1.0;
 		// copy _selectedPage up in the view hierarchy, to allow touch events on its entire frame 
-		_selectedPage.frame = CGRectMake(0, _pageHeaderView.frame.size.height, self.frame.size.width, _selectedPage.frame.size.height);
+		_selectedPage.frame = CGRectMake(0, headerView.frame.size.height, self.frame.size.width, _selectedPage.frame.size.height);
 		[self addSubview:_selectedPage];
 		// notify delegate
 		if ([self.delegate respondsToSelector:@selector(pageScrollView:didSelectPageAtIndex:)]) {
@@ -408,6 +436,8 @@
 		_numberOfPages = [self.dataSource numberOfPagesInScrollView:self];
 	}
 	
+    NSInteger selectedIndex = _selectedPage?[_visiblePages indexOfObject:_selectedPage]:NSNotFound;
+        
 	// reset visible pages array
 	[_visiblePages removeAllObjects];
 	
@@ -426,7 +456,8 @@
 		
 		// reload visible pages
 		for (int index=0; index<_visibleIndexes.length; index++) {
-			[self loadPageAtIndex:_visibleIndexes.location+index insertIntoVisibleIndex:index];
+			HGPageView *page = [self loadPageAtIndex:_visibleIndexes.location+index insertIntoVisibleIndex:index];
+            [self insertPageInScrollView:page atIndex:_visibleIndexes.location+index];
 		}
 		
 		// this will load any additional views which become visible  
@@ -437,24 +468,27 @@
             [self setAlphaForPage : obj];		
         }];
 		
-        // set initial selected page if necessary
-        if (!_selectedPage) {
+        if (selectedIndex == NSNotFound) {
+            // if no page is selected, select the first page
             _selectedPage = [_visiblePages objectAtIndex:0];
-            
-            // update deck title and subtitle for selected page
-            NSInteger index = [self indexForSelectedPage];
-            if ([self.dataSource respondsToSelector:@selector(pageScrollView:titleForPageAtIndex:)]) {
-                _pageDeckTitleLabel.text = [self.dataSource pageScrollView:self titleForPageAtIndex:index];
-            }
-            if ([self.dataSource respondsToSelector:@selector(pageScrollView:subtitleForPageAtIndex:)]) {
-                _pageDeckSubtitleLabel.text = [self.dataSource pageScrollView:self subtitleForPageAtIndex:index];
-            }	
-            
-            // show deck-mode title/subtitle
-            _pageDeckTitleLabel.hidden = NO;
-            _pageDeckSubtitleLabel.hidden = NO;
-
         }
+        else{
+            // refresh the page at the selected index (it might have changed after reloading the visible pages) 
+            _selectedPage = [_visiblePages objectAtIndex:selectedIndex];
+        }
+
+        // update deck title and subtitle for selected page
+        NSInteger index = [self indexForSelectedPage];
+        if ([self.dataSource respondsToSelector:@selector(pageScrollView:titleForPageAtIndex:)]) {
+            _pageDeckTitleLabel.text = [self.dataSource pageScrollView:self titleForPageAtIndex:index];
+        }
+        if ([self.dataSource respondsToSelector:@selector(pageScrollView:subtitleForPageAtIndex:)]) {
+            _pageDeckSubtitleLabel.text = [self.dataSource pageScrollView:self subtitleForPageAtIndex:index];
+        }	
+        
+        // show deck-mode title/subtitle
+        _pageDeckTitleLabel.hidden = NO;
+        _pageDeckSubtitleLabel.hidden = NO;
 
 	}
     
@@ -468,7 +502,7 @@
 
 
 
-- (void) loadPageAtIndex : (NSInteger) index insertIntoVisibleIndex : (NSInteger) visibleIndex
+- (HGPageView*) loadPageAtIndex : (NSInteger) index insertIntoVisibleIndex : (NSInteger) visibleIndex
 {
 	HGPageView *visiblePage = [self.dataSource pageScrollView:self viewForPageAtIndex:index];
 	if (visiblePage.reuseIdentifier) {
@@ -484,10 +518,8 @@
 	
 	// add the page to the visible pages array
 	[_visiblePages insertObject:visiblePage atIndex:visibleIndex];
-	
-	// add the page to the scroll view (to make it actually visible)
-	[self insertPageInScrollView:visiblePage atIndex:index];
-	
+		
+    return visiblePage;
 }
 
 
@@ -655,7 +687,10 @@
 		if (_visibleIndexes.location > 0) { //is is not the first page?
 			_visibleIndexes.length += 1;
 			_visibleIndexes.location -= 1;
-			[self loadPageAtIndex:_visibleIndexes.location insertIntoVisibleIndex:0];
+			HGPageView *page = [self loadPageAtIndex:_visibleIndexes.location insertIntoVisibleIndex:0];
+            // add the page to the scroll view (to make it actually visible)
+            [self insertPageInScrollView:page atIndex:_visibleIndexes.location];
+
 		}
 	}
 	else if(leftViewOriginX < -pageWidth){
@@ -673,7 +708,10 @@
 		//new page is entering the visible range from the right
 		if (_visibleIndexes.location + _visibleIndexes.length < _numberOfPages) { //is is not the last page?
 			_visibleIndexes.length += 1;
-			[self loadPageAtIndex:_visibleIndexes.location+_visibleIndexes.length-1 insertIntoVisibleIndex:_visibleIndexes.length-1];
+            NSInteger index = _visibleIndexes.location+_visibleIndexes.length-1;
+			HGPageView *page = [self loadPageAtIndex:index insertIntoVisibleIndex:_visibleIndexes.length-1];
+            [self insertPageInScrollView:page atIndex:index];
+
 		}
 	}
 }
