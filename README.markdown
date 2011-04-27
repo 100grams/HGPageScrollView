@@ -9,7 +9,40 @@ Like UITableView, HGPageScrollView provides a way to improve performance by reus
 ![](https://github.com/100grams/HGPageScrollView/raw/master/Screenshots/HGPageScrollView_Screen_shot_1.png) 
 ![](https://github.com/100grams/HGPageScrollView/raw/master/Screenshots/HGPageScrollView_Screen_shot_2.png)
 
+## Features ##
 
+### Scrolling horizontally through multiple views 
+In its basic form, HGPageScrollView shows a stack of pages, horizontally scrollable when in DECK mode (see *Selection / Deselection* below), where each page is a single view derived from HGPageView. The view itself is created by the data source and must be provided to HGPageScrollView in *pageScrollView:viewForPageAtIndex:*. 
+
+### Selection / Deselection of views (aka View Modes)  
+HGPageScrollView has two distinct view modes: 
+
+1. *HGPageScrollViewModePage*, in which  the (selected) page is shown in full screen, along with its title header view. 
+2. *HGPageScrollViewModeDeck*, in which pages can be scrolled horizontally. In this mode each page is scaled down to 60% of its original size.
+
+Moving between the two view modes is implicit and occurs after calling *selectPageAtIndex:animated:* and *deselectPageAnimated:*.     
+
+### Custom Page Headers
+HGPageScrollView data source can provide custom header views to replace the default ones (seen in the exaple). A Header view is expected to have a title and a subtitle labels. The customization refers to the look and feel (size, colors etc.) of the header view.  
+
+### Events 
+HGPageScrollView provides events to its delegate on scrolling, dragging selection and deselection of pages. 
+
+### Advanced View Hierarchy (in combination with UINavigationController)
+A more advanced use case, also demonstrated in this sample project, is when the page added to the page scroller actually belongs to a viewController which is part of a UINavigationController navigation stack.  Doing so allows to create a rich and powerful view-hierarchy.
+
+### Inserting / Deleting / Reloading pages  
+HGPageScrollView supports insertion, deletion and reloading of one or more pages:
+
+- (void)insertPagesAtIndexes:(NSIndexSet *)indexes animated:(BOOL)animated;
+
+- (void)deletePagesAtIndexes:(NSIndexSet *)indexes animated:(BOOL)animated; 
+
+- (void)reloadPagesAtIndexes:(NSIndexSet *)indexes;
+ 
+Animating page insertion/deletion will only take effect if it is done within the visible page range.     
+
+  
 ## Requirements ##
 
 - iOS 4.3 or later (Sample project was created with Xcode 3.2.6, iOS SDK 4.3 GM Seed)
