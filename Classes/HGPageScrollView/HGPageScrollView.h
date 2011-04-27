@@ -117,8 +117,10 @@ typedef enum{
 	IBOutlet HGTouchView	*_pageSelectorTouch;
 	
 	NSInteger				 _numberOfPages;
+    NSInteger                _numberOfFreshPages;
 	NSRange                  _visibleIndexes;
     NSMutableArray          *_visiblePages;
+    NSMutableArray          *_deletedPages;
     NSMutableDictionary     *_reusablePages;
 	
 	HGPageView				*_selectedPage;
@@ -139,6 +141,8 @@ typedef enum{
 // Selection
 
 - (NSInteger)indexForSelectedPage;   // returns the index of the currently selected page.
+- (NSInteger)indexForVisiblePage : (HGPageView*) page;   // returns the index of a page in the visible range
+
 // Selects and deselects rows. These methods will not call the delegate methods (-pageScrollView:willSelectPageAtIndex: or pageScrollView:didSelectPageAtIndex:)
 - (void) scrollToPageAtIndex  : (NSInteger) index animated : (BOOL) animated; 
 - (void) selectPageAtIndex    : (NSInteger) index animated : (BOOL) animated;
@@ -156,6 +160,23 @@ typedef enum{
 
 // Data
 - (void) reloadData; 
+
+
+
+// Page insertion/deletion/reloading.
+
+// insert on or more pages into the page scroller. 
+// This method invokes HGPageScrollViewDataSource method numberOfPagesInScrollView:. Specifically, it expects the new number of pages to be equal to the previous number of pages plus the number of inserted pages. If this is not the case an exception is thrown. 
+// Insertions are animated only if animated is set to YES and the insertion is into the visible page range.  
+- (void)insertPagesAtIndexes:(NSIndexSet *)indexes animated:(BOOL)animated;
+
+// delete one or more pages from the page scroller. 
+// This method invokes HGPageScrollViewDataSource method numberOfPagesInScrollView:. Specifically, it expects the new number of pages to be equal to the previous number of pages minus the number of deleted pages. If this is not the case an exception is thrown.  
+// Deletions are animated only if animated is set to YES and the deletion is from the visible page range.  
+- (void)deletePagesAtIndexes:(NSIndexSet *)indexes animated:(BOOL)animated; 
+
+- (void)reloadPagesAtIndexes:(NSIndexSet *)indexes;
+
 
 
 @end

@@ -30,8 +30,10 @@
 
 
 
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------------------------------------------
 //Internal view class, used by to HGPageScrollView.   
+#pragma mark HGTouchView
+
 @interface HGTouchView : UIView {
 }
 @property (nonatomic, retain) UIView *receiver;
@@ -60,30 +62,65 @@
 
 
 
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
-@interface HGPageScrollView(private)
+
+// -----------------------------------------------------------------------------------------------------------------------------------
+#pragma mark - HGPageScrollView private methods & properties
+
+typedef enum{
+    HGPageScrollViewUpdateMethodInsert, 
+    HGPageScrollViewUpdateMethodDelete, 
+    HGPageScrollViewUpdateMethodReload
+}HGPageScrollViewUpdateMethod;
+
+
+@interface HGPageScrollView()
 
 // initializing/updating controls
 - (void) initHeaderForPageAtIndex : (NSInteger) index;
 - (void) initDeckTitlesForPageAtIndex : (NSInteger) index;
 
-// managing pages
-- (HGPageView*) loadPageAtIndex : (NSInteger) index insertIntoVisibleIndex : (NSInteger) visibleIndex;
-- (void) insertPageInScrollView : (HGPageView *) page atIndex : (NSInteger) index;
+// insertion/deletion/update of pages
+- (HGPageView*) loadPageAtIndex:(NSInteger)index insertIntoVisibleIndex:(NSInteger) visibleIndex;
+- (void) addPageToScrollView : (HGPageView*) page atIndex : (NSInteger) index;
+- (void) insertPageInScrollView:(HGPageView *)page atIndex:(NSInteger) index animated:(BOOL)animated;
+- (void) removePagesFromScrollView:(NSArray*)pages animated:(BOOL)animated;
+- (void) setFrameForPage:(UIView*)page atIndex:(NSInteger)index;
+- (void) shiftPage : (UIView*) page withOffset : (CGFloat) offset;
+- (void) setNumberOfPages : (NSInteger) number; 
 - (void) updateScrolledPage : (HGPageView*) page index : (NSInteger) index;
+- (void) prepareForDataUpdate : (HGPageScrollViewUpdateMethod) method withIndexSet : (NSIndexSet*) set;
 
 // managing selection and scrolling
 - (void) updateVisiblePages;
-- (void) setAlphaForPage : (HGPageView*) page;
+- (void) setAlphaForPage : (UIView*) page;
 - (void) preparePage : (HGPageView *) page forMode : (HGPageScrollViewMode) mode; 
 - (void) setViewMode:(HGPageScrollViewMode)mode animated:(BOOL)animated; //toggles selection/deselection
 
 // responding to actions 
 - (void) didChangePageValue : (id) sender;
 
+@property (nonatomic, retain) NSIndexSet *indexesBeforeVisibleRange; 
+@property (nonatomic, retain) NSIndexSet *indexesWithinVisibleRange; 
+@property (nonatomic, retain) NSIndexSet *indexesAfterVisibleRange; 
+
 @end
 
 
+
+// -----------------------------------------------------------------------------------------------------------------------------------
+#pragma mark - HGPageScrollView exception constants
+
+#define kExceptionNameInvalidOperation   @"HGPageScrollView Invalid Operation"
+#define kExceptionReasonInvalidOperation @"Updating HGPageScrollView data is only allowed in DECK mode, i.e. when the page scroller is visible."
+
+#define kExceptionNameInvalidUpdate   @"HGPageScrollView DeletePagesAtIndexes Invalid Update"
+#define kExceptionReasonInvalidUpdate @"The number of pages contained HGPageScrollView after the update (%d) must be equal to the number of pages contained in it before the update (%d), plus or minus the number of pages added or removed from it (%d added, %d removed)."
+
+
+
+// -----------------------------------------------------------------------------------------------------------------------------------
+#pragma mark -
+#pragma mark - HGPageScrollView implementation 
 
 @implementation HGPageScrollView
 
@@ -93,6 +130,12 @@
 @synthesize dataSource				= _dataSource;
 @synthesize delegate				= _delegate;
 @synthesize viewMode				= _viewMode;
+
+@synthesize indexesBeforeVisibleRange;
+@synthesize indexesWithinVisibleRange;
+@synthesize indexesAfterVisibleRange; 
+
+
 
 - (void) awakeFromNib{ 
 
@@ -105,7 +148,8 @@
 	// init internal data structures
 	_visiblePages = [[NSMutableArray alloc] initWithCapacity:3];
 	_reusablePages = [[NSMutableDictionary alloc] initWithCapacity:3]; 
-	
+	_deletedPages = [[NSMutableArray alloc] initWithCapacity:0];
+    
 	// set gradient for background view
 	CAGradientLayer *glayer = [CAGradientLayer layer];
 	glayer.frame = _pageDeckBackgroundView.bounds;
@@ -152,6 +196,8 @@
 {
 	[_visiblePages release];
 	_visiblePages = nil;
+    [_deletedPages release];
+    _deletedPages = nil;
 	[_reusablePages release];
 	_reusablePages = nil;
     [super dealloc];
@@ -180,7 +226,7 @@
 
 - (HGPageView *)pageAtIndex:(NSInteger)index;            // returns nil if page is not visible or the index is out of range
 {
-	if (index < _visibleIndexes.location || index > _visibleIndexes.location + _visibleIndexes.length-1) {
+	if (index == NSNotFound || index < _visibleIndexes.location || index > _visibleIndexes.location + _visibleIndexes.length-1) {
 		return nil;
 	}
 	return [_visiblePages objectAtIndex:index-_visibleIndexes.location];
@@ -194,8 +240,16 @@
 
 - (NSInteger)indexForSelectedPage;   
 {
-	NSInteger index = [_visiblePages indexOfObject:_selectedPage];
-	return _visibleIndexes.location + index;
+    return [self indexForVisiblePage : _selectedPage];
+}
+
+- (NSInteger)indexForVisiblePage : (HGPageView*) page;   
+{
+	NSInteger index = [_visiblePages indexOfObject:page];
+	if (index != NSNotFound) {
+        return _visibleIndexes.location + index;
+    }
+    return NSNotFound;
 }
 
 
@@ -209,6 +263,11 @@
 
 - (void) selectPageAtIndex : (NSInteger) index animated : (BOOL) animated;
 {
+    // ignore if there are no pages or index is invalid
+    if (index == NSNotFound || _numberOfPages == 0) {
+        return;
+    }
+    
 	if (index != [self indexForSelectedPage]) {
         
         // rebuild _visibleIndexes
@@ -256,13 +315,24 @@
 
 - (void) deselectPageAnimated : (BOOL) animated;
 {
+    // ignore if there are no pages or no _selectedPage
+    if (!_selectedPage || _numberOfPages == 0) {
+        return;
+    }
+
+    // Before moving back to DECK mode, refresh the selected page
     NSInteger visibleIndex = [_visiblePages indexOfObject:_selectedPage];
     NSInteger selectedPageScrollIndex = [self indexForSelectedPage];
     CGRect identityFrame = _selectedPage.identityFrame;
+    CGRect pageFrame = _selectedPage.frame;
+    [_selectedPage removeFromSuperview];
     [_visiblePages removeObject:_selectedPage];
     _selectedPage = [self loadPageAtIndex:selectedPageScrollIndex insertIntoVisibleIndex:visibleIndex];
     _selectedPage.identityFrame = identityFrame;
-    
+    _selectedPage.frame = pageFrame;
+    _selectedPage.alpha = 1.0;
+    [self addSubview:_selectedPage];
+
 	[self setViewMode:HGPageScrollViewModeDeck animated:animated];
 }
 
@@ -432,32 +502,33 @@
 
 - (void) reloadData; 
 {
+    NSInteger numPages = 1;  
 	if ([self.dataSource respondsToSelector:@selector(numberOfPagesInScrollView:)]) {
-		_numberOfPages = [self.dataSource numberOfPagesInScrollView:self];
+		numPages = [self.dataSource numberOfPagesInScrollView:self];
 	}
 	
     NSInteger selectedIndex = _selectedPage?[_visiblePages indexOfObject:_selectedPage]:NSNotFound;
         
 	// reset visible pages array
 	[_visiblePages removeAllObjects];
-	
-	// set pageScroller contentSize
-	_scrollView.contentSize = CGSizeMake(_numberOfPages * _scrollView.bounds.size.width, _scrollView.bounds.size.height);
+	// remove all subviews from scrollView
+    [[_scrollView subviews] enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+        [obj removeFromSuperview];
+    }]; 
+     
+	[self setNumberOfPages:numPages];
 	
     // hide view components initially
     _pageHeaderView.alpha = 0.0;	
     _pageDeckTitleLabel.hidden = YES;
     _pageDeckSubtitleLabel.hidden = YES;
     
-    // set page selector (page control)
-    [_pageSelector setNumberOfPages:_numberOfPages];
-
 	if (_numberOfPages > 0) {
 		
 		// reload visible pages
 		for (int index=0; index<_visibleIndexes.length; index++) {
 			HGPageView *page = [self loadPageAtIndex:_visibleIndexes.location+index insertIntoVisibleIndex:index];
-            [self insertPageInScrollView:page atIndex:_visibleIndexes.location+index];
+            [self addPageToScrollView:page atIndex:_visibleIndexes.location+index];
 		}
 		
 		// this will load any additional views which become visible  
@@ -523,21 +594,15 @@
 }
 
 
-- (void) insertPageInScrollView : (HGPageView *) page atIndex : (NSInteger) index
+// add a page to the scroll view at a given index. No adjustments are made to existing pages offsets. 
+- (void) addPageToScrollView : (HGPageView*) page atIndex : (NSInteger) index
 {
     // inserting a page into the scroll view is in HGPageScrollViewModeDeck by definition (the scroll is the "deck")
     [self preparePage:page forMode:HGPageScrollViewModeDeck];
-         
+    
 	// configure the page frame
-	page.transform = CGAffineTransformMakeScale(0.6, 0.6);;
-	CGFloat contentOffset = index * _scrollView.frame.size.width;
-	CGFloat margin = (_scrollView.frame.size.width - page.frame.size.width) / 2; 
-	CGRect frame = page.frame;
-	frame.origin.x = contentOffset + margin;
-	frame.origin.y = 0.0;
-	page.frame = frame;
-
-
+    [self setFrameForPage : page atIndex:index];
+    
 	// add shadow (use shadowPath to improve rendering performance)
 	page.layer.shadowColor = [[UIColor blackColor] CGColor];	
 	page.layer.shadowOffset = CGSizeMake(8.0f, 12.0f);
@@ -545,22 +610,389 @@
     page.layer.masksToBounds = NO;
     UIBezierPath *path = [UIBezierPath bezierPathWithRect:page.bounds];
     page.layer.shadowPath = path.CGPath;	
-	
+ 
     // add the page to the scroller
 	[_scrollView insertSubview:page atIndex:0];
-		
-//	NSLog(@"inserted page 0x%x at index %d offset=%f, frame={%f,%f,%f,%f}", page, index, contentOffset, page.frame.origin.x, page.frame.origin.y, page.frame.size.width, page.frame.size.height);
-	
 
 }
 
-
-- (void) reloadPageInScrollViewAtIndex : (NSInteger) index 
+// inserts a page to the scroll view at a given offset by pushing existing pages forward.
+- (void) insertPageInScrollView : (HGPageView *) page atIndex : (NSInteger) index animated : (BOOL) animated
 {
+    //hide the new page before inserting it
+    page.alpha = 0.0; 
+    
+    // add the new page at the correct offset
+	[self addPageToScrollView:page atIndex:index]; 
+    
+    // shift pages at or after the new page offset forward
+    [[_scrollView subviews] enumerateObjectsUsingBlock:^(id existingPage, NSUInteger idx, BOOL *stop) {
+
+        if(existingPage != page && page.frame.origin.x <= ((UIView*)existingPage).frame.origin.x){
+      
+            if (animated) {
+                [UIView animateWithDuration:0.4 animations:^(void) {
+                    [self shiftPage : existingPage withOffset: _scrollView.frame.size.width];
+                }];
+            }
+            else{
+                [self shiftPage : existingPage withOffset: _scrollView.frame.size.width];
+            }                
+        }
+    }];
+
+    if (animated) {
+        [UIView animateWithDuration:0.4 animations:^(void) {
+            [self setAlphaForPage:page];
+        }];
+    }
+    else{
+        [self setAlphaForPage:page];
+    }
+ 		
 	
+
 }
 
 
+
+- (void) removePagesFromScrollView : (NSArray*) pages animated:(BOOL)animated
+{
+    CGFloat selectedPageOffset = NSNotFound;
+    if ([pages containsObject:_selectedPage]) {
+        selectedPageOffset = _selectedPage.frame.origin.x;
+    }
+    
+    // remove the pages from the scrollView
+    [pages enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+        [obj removeFromSuperview];
+    }];
+         
+    // shift the remaining pages in the scrollView
+    [[_scrollView subviews] enumerateObjectsUsingBlock:^(id remainingPage, NSUInteger idx, BOOL *stop) {
+        NSIndexSet *removedPages = [pages indexesOfObjectsPassingTest:^BOOL(id removedPage, NSUInteger idx, BOOL *stop) {
+            return ((UIView*)removedPage).frame.origin.x < ((UIView*)remainingPage).frame.origin.x;
+        }]; 
+                
+        if ([removedPages count] > 0) {
+            
+            if (animated) {
+                [UIView animateWithDuration:0.4 animations:^(void) {
+                    [self shiftPage : remainingPage withOffset: -([removedPages count]*_scrollView.frame.size.width)];
+                }];
+            }
+            else{
+                [self shiftPage : remainingPage withOffset: -([removedPages count]*_scrollView.frame.size.width)];
+            }                
+        }
+        
+    }];
+
+    // update the selected page if it has been removed 
+    if(selectedPageOffset != NSNotFound){
+        NSInteger index = [[_scrollView subviews] indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
+            CGFloat delta = fabsf(((UIView*)obj).frame.origin.x - selectedPageOffset);
+            return delta < 0.1;
+        }];
+        HGPageView *newSelectedPage=nil;
+        if (index != NSNotFound) {
+            // replace selected page with the new page which is in the same offset 
+            newSelectedPage = [[_scrollView subviews] objectAtIndex:index];
+        }
+        else{
+            // replace selected page with last visible page 
+            newSelectedPage = [_visiblePages lastObject];
+        }        
+        NSInteger newSelectedPageIndex = [self indexForVisiblePage:newSelectedPage];
+        if (newSelectedPage != _selectedPage) {
+            [self updateScrolledPage:newSelectedPage index:newSelectedPageIndex];
+        }
+    }
+
+    // adjust _scrollView content size
+//    CGSize newContentSize = _scrollView.contentSize;
+//    newContentSize.width -= [pages count] * _scrollView.frame.size.width;
+//    _scrollView.contentSize = newContentSize;
+//    
+//    // adjust page selector (control)
+//    _pageSelector.numberOfPages -= [pages count];
+    
+
+}
+
+
+
+
+- (void) setFrameForPage : (UIView*) page atIndex : (NSInteger) index;
+{
+    page.transform = CGAffineTransformMakeScale(0.6, 0.6);;
+	CGFloat contentOffset = index * _scrollView.frame.size.width;
+	CGFloat margin = (_scrollView.frame.size.width - page.frame.size.width) / 2; 
+	CGRect frame = page.frame;
+	frame.origin.x = contentOffset + margin;
+	frame.origin.y = 0.0;
+	page.frame = frame;
+    
+}
+
+
+- (void) shiftPage : (UIView*) page withOffset : (CGFloat) offset
+{
+    CGRect frame = page.frame;
+    frame.origin.x += offset;
+    page.frame = frame; 
+    
+    // also refresh the alpha of the shifted page
+    [self setAlphaForPage : page];	
+    
+}
+
+
+
+#pragma mark - insertion/deletion/reloading
+
+- (void) prepareForDataUpdate : (HGPageScrollViewUpdateMethod) method withIndexSet : (NSIndexSet*) indexes
+{
+    // check if current mode allows data update
+    if(self.viewMode == HGPageScrollViewModePage){
+        // deleting pages is (currently) only supported in DECK mode.
+        NSException *exception = [NSException exceptionWithName:kExceptionNameInvalidOperation reason:kExceptionReasonInvalidOperation userInfo:nil];
+        [exception raise];
+    }
+
+    // check number of pages
+    if ([self.dataSource respondsToSelector:@selector(numberOfPagesInScrollView:)]) {
+		
+        NSInteger newNumberOfPages = [self.dataSource numberOfPagesInScrollView:self];
+
+        NSInteger expectedNumberOfPages;
+        NSString *reason;
+        switch (method) {
+            case HGPageScrollViewUpdateMethodDelete:
+                expectedNumberOfPages = _numberOfPages-[indexes count];
+                reason = [NSString stringWithFormat:kExceptionReasonInvalidUpdate, newNumberOfPages, _numberOfPages, 0, [indexes count]];
+                break;
+            case HGPageScrollViewUpdateMethodInsert:
+                expectedNumberOfPages = _numberOfPages+[indexes count];
+                reason = [NSString stringWithFormat:kExceptionReasonInvalidUpdate, newNumberOfPages, _numberOfPages, [indexes count], 0];
+                break;
+            case HGPageScrollViewUpdateMethodReload:
+                reason = [NSString stringWithFormat:kExceptionReasonInvalidUpdate, newNumberOfPages, _numberOfPages, 0, 0];
+            default:
+                expectedNumberOfPages = _numberOfPages;
+                break;
+        }
+    
+        if (newNumberOfPages != expectedNumberOfPages) {
+            NSException *exception = [NSException exceptionWithName:kExceptionNameInvalidUpdate reason:reason userInfo:nil];
+            [exception raise];
+        }
+	}
+    
+    // separate the indexes into 3 sets:
+    self.indexesBeforeVisibleRange = nil;
+    self.indexesBeforeVisibleRange = [indexes indexesPassingTest:^BOOL(NSUInteger idx, BOOL *stop) {
+        return (idx < _visibleIndexes.location);
+    }];
+    self.indexesWithinVisibleRange = nil;
+    self.indexesWithinVisibleRange = [indexes indexesPassingTest:^BOOL(NSUInteger idx, BOOL *stop) {
+        return (idx >= _visibleIndexes.location && 
+                (_visibleIndexes.length>0 ? idx < _visibleIndexes.location+_visibleIndexes.length : YES));
+    }];
+    
+    self.indexesAfterVisibleRange = nil;
+    self.indexesAfterVisibleRange = [indexes indexesPassingTest:^BOOL(NSUInteger idx, BOOL *stop) {
+        return ((_visibleIndexes.length>0 ? idx >= _visibleIndexes.location+_visibleIndexes.length : NO));
+    }];
+
+}
+
+
+
+- (void)insertPagesAtIndexes:(NSIndexSet *)indexes animated : (BOOL) animated;
+{
+    
+    [self prepareForDataUpdate : HGPageScrollViewUpdateMethodInsert withIndexSet:indexes];
+    
+    // handle insertion of pages before the visible range. Shift pages forward.
+    if([self.indexesBeforeVisibleRange count] > 0) {
+        [self setNumberOfPages : _numberOfPages+[self.indexesBeforeVisibleRange count]];
+        [[_scrollView subviews] enumerateObjectsUsingBlock:^(id page, NSUInteger idx, BOOL *stop) {
+            [self shiftPage:page withOffset:[self.indexesBeforeVisibleRange count] * _scrollView.frame.size.width];
+        }];
+        
+        _visibleIndexes.location += [self.indexesBeforeVisibleRange count]; 
+        
+        // update scrollView contentOffset
+        CGPoint contentOffset = _scrollView.contentOffset;
+        contentOffset.x += [self.indexesBeforeVisibleRange count] * _scrollView.frame.size.width;
+        _scrollView.contentOffset = contentOffset;
+        
+        // refresh the page control
+        [_pageSelector setCurrentPage:[self indexForSelectedPage]];
+
+    }
+    
+    // handle insertion of pages within the visible range. 
+    NSInteger selectedPageIndex = (_numberOfPages > 0)? [self indexForSelectedPage] : 0;
+    [self setNumberOfPages:_numberOfPages +[self.indexesWithinVisibleRange count]];
+    [self.indexesWithinVisibleRange enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
+    
+        HGPageView *page = [self loadPageAtIndex:idx insertIntoVisibleIndex: idx - _visibleIndexes.location];
+        [self insertPageInScrollView:page atIndex:idx animated:animated]; 
+        _visibleIndexes.length++; 
+        if (_visibleIndexes.length > 3) {
+            HGPageView *page = [_visiblePages lastObject];
+            [page removeFromSuperview];
+            [_visiblePages removeObject:page];
+            _visibleIndexes.length--;
+        }
+
+    }];
+    
+    // update selected page if necessary
+    if ([self.indexesWithinVisibleRange containsIndex:selectedPageIndex]) {
+        [self updateScrolledPage:[_visiblePages objectAtIndex:(selectedPageIndex-_visibleIndexes.location)] index:selectedPageIndex];
+    }
+    
+    // handle insertion of pages after the visible range
+    if ([self.indexesAfterVisibleRange count] > 0) {
+        [self setNumberOfPages:_numberOfPages +[self.indexesAfterVisibleRange count]];
+    }
+        
+
+}
+
+
+- (void)deletePagesAtIndexes:(NSIndexSet *)indexes animated:(BOOL)animated;
+{
+
+    [self prepareForDataUpdate : HGPageScrollViewUpdateMethodDelete withIndexSet:indexes];
+    
+    // handle deletion of indexes _before_ the visible range. 
+    [self.indexesBeforeVisibleRange enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
+        // 'Removing' pages which are before the visible range is a special case because we don't really have an instance of these pages. 
+        // Therefore, we create pseudo-pages to be 'removed' by removePagesFromScrollView:animated:. This method shifts all pages  
+        // which follow the deleted ones backwards and adjusts the contentSize of the scrollView.
+
+        //TODO: solve this limitation:
+        // in order to shift pages backwards and trim the content size, the WIDTH of each deleted page needs to be known. 
+        // We don't have an instance of the deleted pages and we cannot ask the data source to provide them because they've already been deleted. As a temp solution we take the default page width of 320. 
+        // This assumption may be wrong if the data source uses anotehr page width or alternatively varying page widths.   
+        UIView *pseudoPage = [[[UIView alloc] initWithFrame:CGRectMake(0, 0, 320, 460)] autorelease];
+        [self setFrameForPage:pseudoPage atIndex:idx];
+        [_deletedPages addObject:pseudoPage];
+        _visibleIndexes.location--;
+    }];
+    if ([_deletedPages count] > 0) {
+        
+        // removePagesFromScrollView:animated shifts all pages which follow the deleted pages backwards, and trims the scrollView contentSize respectively. As a result UIScrollView may adjust its contentOffset (if it is larger than the new contentSize). 
+        // Here we store the oldOffset to make sure we adjust it by exactly the number of pages deleted. 
+        CGFloat oldOffset = _scrollView.contentOffset.x;
+        // set the new number of pages 
+        [self setNumberOfPages:_numberOfPages - [_deletedPages count]];
+        //_numberOfPages -= [_deletedPages count];
+        
+        [self removePagesFromScrollView:_deletedPages animated:NO]; //never animate removal of non-visible pages
+        CGFloat newOffset = oldOffset - ([_deletedPages count] * _scrollView.frame.size.width);
+        _scrollView.contentOffset = CGPointMake(newOffset, _scrollView.contentOffset.y);
+        [_deletedPages removeAllObjects];
+    }
+    
+        
+    // handle deletion of pages _within_ and _after_ the visible range. 
+    _numberOfFreshPages = 0;
+    NSInteger numPagesAfterDeletion = _numberOfPages -= [self.indexesWithinVisibleRange count] + [self.indexesAfterVisibleRange count]; 
+    [self.indexesWithinVisibleRange enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
+
+        // get the deleted page 
+        [_deletedPages addObject: [self pageAtIndex:idx]];
+        
+        // load new pages to replace the deleted ones in the visible range 
+        if (_visibleIndexes.location + _visibleIndexes.length <= numPagesAfterDeletion){
+            // more pages are available after the visible range. Load a new page from the data source
+            NSInteger newPageIndex = _visibleIndexes.location+_visibleIndexes.length - [_deletedPages count];
+            HGPageView *page = [self loadPageAtIndex:newPageIndex insertIntoVisibleIndex:_visibleIndexes.length];            
+            // insert the new page after the current visible pages. When the visible pages will be removed, 
+            // in removePagesFromScrollView:animated:, these new page/s will enter the visible rectangle of the scrollView. 
+            [self addPageToScrollView:page atIndex:newPageIndex+[self.indexesWithinVisibleRange count] ]; 
+            _numberOfFreshPages++;
+        }
+        
+    }];
+    
+
+    // update the visible range if necessary
+    NSInteger deleteCount = [_deletedPages count];
+    if(deleteCount>0 && _numberOfFreshPages < deleteCount){
+        // Not enough fresh pages were loaded to fill in for the deleted pages in the visible range. 
+        // This can only be a result of hitting the end of the page scroller. 
+        // Adjust the visible range to show the end of the scroll (ideally the last 2 pages, or less). 
+        NSInteger newLength = _visibleIndexes.length - deleteCount + _numberOfFreshPages;
+        if (newLength >= 2) {
+            _visibleIndexes.length = newLength;
+        }
+        else{
+            if(_visibleIndexes.location==0){
+                _visibleIndexes.length = newLength;
+            }
+            else{
+                NSInteger delta = MIN(2-newLength, _visibleIndexes.location);
+                _visibleIndexes.length = newLength + delta;
+                _visibleIndexes.location -= delta; 
+                
+                //load 'delta' pages from before the visible range to replace deleted pages
+                for (int i=0; i<delta; i++) {
+                    HGPageView *page = [self loadPageAtIndex:_visibleIndexes.location+i insertIntoVisibleIndex:i];    
+                    [self addPageToScrollView:page atIndex:_visibleIndexes.location+i ]; 
+                }
+            }
+
+        }               
+    }
+    
+    
+    //update number of pages.  
+    [self setNumberOfPages:numPagesAfterDeletion];
+    // remove the pages marked for deletion from visiblePages 
+    [_visiblePages removeObjectsInArray:_deletedPages];
+    // ...and from the scrollView
+    [self removePagesFromScrollView:_deletedPages animated:animated];
+
+
+    [_deletedPages removeAllObjects];
+    
+    // for indexes after the visible range, only adjust the scrollView contentSize
+//    if ([self.indexesAfterVisibleRange count] > 0) {
+//        _scrollView.contentSize = CGSizeMake(_numberOfPages * _scrollView.bounds.size.width, _scrollView.bounds.size.height);            
+//        _pageSelector.numberOfPages = _numberOfPages;      
+//    }
+    
+}
+
+- (void)reloadPagesAtIndexes:(NSIndexSet *)indexes;
+{
+    [self prepareForDataUpdate : HGPageScrollViewUpdateMethodReload withIndexSet:indexes];
+
+    // only reload pages within the visible range
+    [self.indexesWithinVisibleRange enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
+        HGPageView *page = [self pageAtIndex:idx];
+        [_visiblePages removeObject : page]; // remove from visiblePages
+        [page removeFromSuperview];          // remove from scrollView
+        
+        page = [self loadPageAtIndex:idx insertIntoVisibleIndex: idx - _visibleIndexes.location];
+        [self addPageToScrollView:page atIndex:idx];
+    }];        
+}
+
+
+- (void) setNumberOfPages : (NSInteger) number 
+{
+    _numberOfPages = number; 
+    _scrollView.contentSize = CGSizeMake(_numberOfPages * _scrollView.bounds.size.width, _scrollView.bounds.size.height);            
+    _pageSelector.numberOfPages = _numberOfPages;      
+
+}
 
 #pragma mark -
 #pragma mark UIScrollViewDelegate
@@ -640,36 +1072,44 @@
 
 - (void) updateScrolledPage : (HGPageView*) page index : (NSInteger) index
 {
-	// notify delegate
-	if ([self.delegate respondsToSelector:@selector(pageScrollView:willScrollToPage:atIndex:)]) {
-		[self.delegate pageScrollView:self willScrollToPage:page atIndex:index];
-	}
-	
-	// update title and subtitle
-	if ([self.dataSource respondsToSelector:@selector(pageScrollView:titleForPageAtIndex:)]) {
-		_pageDeckTitleLabel.text = [self.dataSource pageScrollView:self titleForPageAtIndex:index];
-	}
-	if ([self.dataSource respondsToSelector:@selector(pageScrollView:subtitleForPageAtIndex:)]) {
-		_pageDeckSubtitleLabel.text = [self.dataSource pageScrollView:self subtitleForPageAtIndex:index];
-	}
-	
-	// set the page selector (page control)
-	[_pageSelector setCurrentPage:index];
-	
-	// set selected page
-	_selectedPage = page;
-//	NSLog(@"selectedPage: 0x%x (index %d)", page, index );
-    
-    if (_scrollView.dragging) {
-        _isPendingScrolledPageUpdateNotification = YES;
+    if (!page) {
+         _pageDeckTitleLabel.text = @"";
+        _pageDeckSubtitleLabel.text = @"";
+        _selectedPage = nil;
     }
     else{
-        // notify delegate again
-        if ([self.delegate respondsToSelector:@selector(pageScrollView:didScrollToPage:atIndex:)]) {
-            [self.delegate pageScrollView:self didScrollToPage:page atIndex:index];
+        // notify delegate
+        if ([self.delegate respondsToSelector:@selector(pageScrollView:willScrollToPage:atIndex:)]) {
+            [self.delegate pageScrollView:self willScrollToPage:page atIndex:index];
         }
-        _isPendingScrolledPageUpdateNotification = NO;
-    }	
+        
+        // update title and subtitle
+        if ([self.dataSource respondsToSelector:@selector(pageScrollView:titleForPageAtIndex:)]) {
+            _pageDeckTitleLabel.text = [self.dataSource pageScrollView:self titleForPageAtIndex:index];
+        }
+        if ([self.dataSource respondsToSelector:@selector(pageScrollView:subtitleForPageAtIndex:)]) {
+            _pageDeckSubtitleLabel.text = [self.dataSource pageScrollView:self subtitleForPageAtIndex:index];
+        }
+        
+        // set the page selector (page control)
+        [_pageSelector setCurrentPage:index];
+        
+        // set selected page
+        _selectedPage = page;
+        //	NSLog(@"selectedPage: 0x%x (index %d)", page, index );
+        
+        if (_scrollView.dragging) {
+            _isPendingScrolledPageUpdateNotification = YES;
+        }
+        else{
+            // notify delegate again
+            if ([self.delegate respondsToSelector:@selector(pageScrollView:didScrollToPage:atIndex:)]) {
+                [self.delegate pageScrollView:self didScrollToPage:page atIndex:index];
+            }
+            _isPendingScrolledPageUpdateNotification = NO;
+        }	       
+    }
+
 }
 
 
@@ -684,24 +1124,28 @@
 	
 	if (leftViewOriginX > 0) {
 		//new page is entering the visible range from the left
-		if (_visibleIndexes.location > 0) { //is is not the first page?
+		if (_visibleIndexes.location > 0) { //is it not the first page?
 			_visibleIndexes.length += 1;
 			_visibleIndexes.location -= 1;
 			HGPageView *page = [self loadPageAtIndex:_visibleIndexes.location insertIntoVisibleIndex:0];
             // add the page to the scroll view (to make it actually visible)
-            [self insertPageInScrollView:page atIndex:_visibleIndexes.location];
+            [self addPageToScrollView:page atIndex:_visibleIndexes.location ];
 
 		}
 	}
 	else if(leftViewOriginX < -pageWidth){
 		//left page is exiting the visible range
-		[_visiblePages removeObjectAtIndex:0];
+		UIView *page = [_visiblePages objectAtIndex:0];
+        [_visiblePages removeObject:page];
+        [page removeFromSuperview]; //remove from the scroll view
 		_visibleIndexes.location += 1;
 		_visibleIndexes.length -= 1;
 	}
 	if (rightViewOriginX > self.frame.size.width) {
 		//right page is exiting the visible range
-		[_visiblePages removeLastObject];
+		UIView *page = [_visiblePages lastObject];
+        [_visiblePages removeObject:page];
+        [page removeFromSuperview]; //remove from the scroll view
 		_visibleIndexes.length -= 1;
 	}
 	else if(rightViewOriginX + pageWidth < self.frame.size.width){
@@ -710,14 +1154,14 @@
 			_visibleIndexes.length += 1;
             NSInteger index = _visibleIndexes.location+_visibleIndexes.length-1;
 			HGPageView *page = [self loadPageAtIndex:index insertIntoVisibleIndex:_visibleIndexes.length-1];
-            [self insertPageInScrollView:page atIndex:index];
+            [self addPageToScrollView:page atIndex:index];
 
 		}
 	}
 }
 
 
-- (void) setAlphaForPage : (HGPageView*) page
+- (void) setAlphaForPage : (UIView*) page
 {
 	CGFloat delta = _scrollView.contentOffset.x - page.frame.origin.x;
 	CGFloat step = self.frame.size.width;
@@ -789,6 +1233,9 @@
 
 - (void)handleTapGestureFrom:(UITapGestureRecognizer *)recognizer 
 {
+    if(!_selectedPage)
+        return;
+    
 	NSInteger selectedIndex = [self indexForSelectedPage];
 	
 	[self selectPageAtIndex:selectedIndex animated:YES];

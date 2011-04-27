@@ -30,14 +30,14 @@
 
 #define kNumPages 10
 
-@interface HGPageScrollViewSampleViewController : UIViewController <HGPageScrollViewDelegate, HGPageScrollViewDataSource> {
+@interface HGPageScrollViewSampleViewController : UIViewController <HGPageScrollViewDelegate, HGPageScrollViewDataSource, UITextFieldDelegate> {
 		
 	HGPageScrollView *_myPageScrollView;
     NSMutableArray   *_myPageDataArray;
 	
 	IBOutlet UIToolbar *toolbar;
-        
-    UINavigationController *_myNavController;
+            
+    NSMutableIndexSet *indexesToDelete, *indexesToInsert, *indexesToReload;
 }
 
 @end

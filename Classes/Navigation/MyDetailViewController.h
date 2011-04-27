@@ -15,7 +15,7 @@
     
     IBOutlet UILabel     *_titleLabel;
     IBOutlet UITextView  *_textView; 
-    IBOutlet UIImageView *_imageView;     
+    IBOutlet UIImageView *_imageView;  
 }
 
 @property (nonatomic, retain) NSString *subtitle; 

@@ -32,9 +32,13 @@
 
 }
 
+// some properties for our pages
 @property (nonatomic, retain) NSString *title; 
 @property (nonatomic, retain) NSString *subtitle; 
 @property (nonatomic, retain) UIImage *image; 
-@property (nonatomic, retain) NSString *description; 
+
+// an example of using UINavigationController as the owner of the page. 
+@property (nonatomic, retain) UINavigationController *navController; 
+
 
 @end

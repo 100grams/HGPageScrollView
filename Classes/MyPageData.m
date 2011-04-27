@@ -30,7 +30,7 @@
 
 @implementation MyPageData
 
-@synthesize title, subtitle, image, description; 
+@synthesize title, subtitle, image, navController; 
 
 
 #pragma mark - PageScrollerHeaderInfo
@@ -47,5 +47,11 @@
 }
 
 
+#pragma mark - NSObject 
+
+- (NSString*) description
+{
+    return [NSString stringWithFormat:@"%@ 0x%x: %@", [self class], self, self.title];
+}
 
 @end
