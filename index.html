@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset='utf-8'>
+
+  <title>100grams/HGPageScrollView @ GitHub</title>
+
+  <style type="text/css">
+    body {
+      margin-top: 1.0em;
+      background-color: #395eae;
+      font-family: Helvetica, Arial, FreeSans, san-serif;
+      color: #ffffff;
+    }
+    #container {
+      margin: 0 auto;
+      width: 700px;
+    }
+    h1 { font-size: 3.8em; color: #c6a151; margin-bottom: 3px; }
+    h1 .small { font-size: 0.4em; }
+    h1 a { text-decoration: none }
+    h2 { font-size: 1.5em; color: #c6a151; }
+    h3 { text-align: center; color: #c6a151; }
+    a { color: #c6a151; }
+    .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
+    .download { float: right; }
+    pre { background: #000; color: #fff; padding: 15px;}
+    hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
+    .footer { text-align:center; padding-top:30px; font-style: italic; }
+  </style>
+</head>
+
+<body>
+  <a href="http://github.com/100grams/HGPageScrollView"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
+
+  <div id="container">
+
+    <div class="download">
+      <a href="http://github.com/100grams/HGPageScrollView/zipball/master">
+        <img border="0" width="90" src="http://github.com/images/modules/download/zip.png"></a>
+      <a href="http://github.com/100grams/HGPageScrollView/tarball/master">
+        <img border="0" width="90" src="http://github.com/images/modules/download/tar.png"></a>
+    </div>
+
+    <h1><a href="http://github.com/100grams/HGPageScrollView">HGPageScrollView</a>
+      <span class="small">by <a href="http://github.com/100grams">100grams</a></span></h1>
+
+    <div class="description">
+      iPhone UIScrollView with horizontal paging like mobile Safari tabs.
+    </div>
+
+    <p>
+An extension of iOS UIScrollView that allows scrolling of multiple pages, like mobile Safari tab viewer. 
+
+HGPageScrollView uses a similar methodology to UITableView. It defines both a **dataSource** and a **delegate**, which its client can implement. At the very least HGPageScrollView expects its dataSource to provide **HGPageViews** to display. 
+
+Like UITableView, HGPageScrollView provides a way to improve performance by reusing pages. It maintains a queue of pages that the data source has marked for reuse. A page is marked for reuse by assigning a value to its *reuseIdentifier*.             
+ 
+![](https://github.com/100grams/HGPageScrollView/raw/master/Screenshots/HGPageScrollView_Screen_shot_1.png) 
+![](https://github.com/100grams/HGPageScrollView/raw/master/Screenshots/HGPageScrollView_Screen_shot_2.png)
+
+## Features ##
+
+### Scrolling horizontally through multiple views 
+In its basic form, HGPageScrollView shows a stack of pages, horizontally scrollable when in DECK mode (see *Selection / Deselection* below), where each page is a single view derived from HGPageView. The view itself is created by the data source and must be provided to HGPageScrollView in *pageScrollView:viewForPageAtIndex:*. 
+
+### Selection / Deselection of views (aka View Modes)  
+HGPageScrollView has two distinct view modes: 
+
+1. *HGPageScrollViewModePage*, in which  the (selected) page is shown in full screen, along with its title header view. 
+2. *HGPageScrollViewModeDeck*, in which pages can be scrolled horizontally. In this mode each page is scaled down to 60% of its original size.
+
+Moving between the two view modes is implicit and occurs after calling *selectPageAtIndex:animated:* and *deselectPageAnimated:*.     
+
+### Custom Page Headers
+HGPageScrollView data source can provide custom header views to replace the default ones (seen in the exaple). A Header view is expected to have a title and a subtitle labels. The customization refers to the look and feel (size, colors etc.) of the header view.  
+
+### Events 
+HGPageScrollView provides events to its delegate on scrolling, dragging selection and deselection of pages. 
+
+### Advanced View Hierarchy (in combination with UINavigationController)
+A more advanced use case, also demonstrated in this sample project, is when the page added to the page scroller actually belongs to a viewController which is part of a UINavigationController navigation stack.  Doing so allows to create a rich and powerful view-hierarchy.
+
+### Inserting / Deleting / Reloading pages  
+HGPageScrollView supports insertion, deletion and reloading of one or more pages:
+
+- (void)insertPagesAtIndexes:(NSIndexSet *)indexes animated:(BOOL)animated;
+
+- (void)deletePagesAtIndexes:(NSIndexSet *)indexes animated:(BOOL)animated; 
+
+- (void)reloadPagesAtIndexes:(NSIndexSet *)indexes;
+ 
+Animating page insertion/deletion will only take effect if it is done within the visible page range.     
+
+  
+</p><h2>Dependencies</h2>
+<p>iOS 4.3 or later (Sample project was created with Xcode 3.2.6, iOS SDK 4.3 GM Seed)</p>
+<h2>Install</h2>
+<p>Import HGPageScrollView folder into your project. 
+ 
+In your ViewController's initialization code, e.g. in <code>viewDidLoad</code>, instantiate HGPageScrollView from its associated NIB file, as follows:  
+
+<blockquote><code>
+<p> HGPageScrollView *pageScrollView = [[[NSBundle mainBundle] loadNibNamed:@"HGPageScrollView" owner:self options:nil] objectAtIndex:0];</p>
+<p>[self.view addSubview:pageScrollView];</p></code> 
+</blockquote>
+
+
+Declare your view controller as <code>HGPageScrollViewDataSource</code> and optionally as <code>HGPageScrollViewDelegate</code> implement at the very least the required method in this protocol: <code>pageScrollView:viewForPageAtIndex:</code>    
+
+You can extend HGPageView by deriving from it, or as shown in the sample project, define your custom view.xib and set it's top level item to be HGPageView class. Then simply load your view using NSBundle's <code>loadFromNib:owner:options</code>. Make sure to define a **reuseIdentifier** for your view in order to improve performance.   
+
+</p>
+<h2>License</h2>
+<p>HGPageScrollView is released under MIT License.
+
+Please report bugs/issues to help improve this code. 
+
+Any suggestions and/or code to help improve this source will be much appreciated.
+
+Thanks!  </p>
+<h2>Authors</h2>
+<p>Rotem Rubnov (rotem.rubnov@100grams.nl)<br/><br/>      </p>
+<h2>Contact</h2>
+<p>Rotem Rubnov (rotem.rubnov@100grams.nl)<br/>      </p>
+
+
+    <h2>Download</h2>
+    <p>
+      You can download this project in either
+      <a href="http://github.com/100grams/HGPageScrollView/zipball/master">zip</a> or
+      <a href="http://github.com/100grams/HGPageScrollView/tarball/master">tar</a> formats.
+    </p>
+    <p>You can also clone the project with <a href="http://git-scm.com">Git</a>
+      by running:
+      <pre>$ git clone git://github.com/100grams/HGPageScrollView</pre>
+    </p>
+
+    <div class="footer">
+      get the source code on GitHub : <a href="http://github.com/100grams/HGPageScrollView">100grams/HGPageScrollView</a>
+    </div>
+
+  </div>
+
+  
+</body>
+</html>
