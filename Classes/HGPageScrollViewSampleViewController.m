@@ -500,7 +500,7 @@
     textField.delegate = nil;
     
     [indexesToReload release];
-    indexesToReload = [[NSIndexSet alloc] initWithIndex:selectedIndex];
+    indexesToReload = [[NSMutableIndexSet alloc] initWithIndex:selectedIndex];
     
     if (pageScrollView.viewMode == HGPageScrollViewModePage) {
         [pageScrollView deselectPageAnimated:YES];
