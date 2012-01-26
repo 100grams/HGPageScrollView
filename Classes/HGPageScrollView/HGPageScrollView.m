@@ -93,6 +93,7 @@ typedef enum{
 // managing selection and scrolling
 - (void) updateVisiblePages;
 - (void) setAlphaForPage : (UIView*) page;
+- (void) setOpacity:(CGFloat)alpha forObstructionLayerOfPage:(UIView *)page;
 - (void) preparePage : (HGPageView *) page forMode : (HGPageScrollViewMode) mode; 
 - (void) setViewMode:(HGPageScrollViewMode)mode animated:(BOOL)animated; //toggles selection/deselection
 
@@ -153,8 +154,8 @@ typedef enum{
 	// set gradient for background view
 	CAGradientLayer *glayer = [CAGradientLayer layer];
 	glayer.frame = _pageDeckBackgroundView.bounds;
-	UIColor *topColor = [UIColor colorWithRed:0.8 green:0.8 blue:0.8 alpha:1.0]; //light blue-gray
-	UIColor *bottomColor = [UIColor colorWithRed:0.4 green:0.4 blue:0.4 alpha:1.0]; //dark blue-gray
+	UIColor *topColor = [UIColor colorWithRed:0.57 green:0.63 blue:0.68 alpha:1.0]; //light blue-gray
+	UIColor *bottomColor = [UIColor colorWithRed:0.31 green:0.41 blue:0.48 alpha:1.0]; //dark blue-gray
 	glayer.colors = [NSArray arrayWithObjects:(id)[topColor CGColor], (id)[bottomColor CGColor], nil];
 	[_pageDeckBackgroundView.layer insertSublayer:glayer atIndex:0];
 	
@@ -330,7 +331,8 @@ typedef enum{
     _selectedPage = [self loadPageAtIndex:selectedPageScrollIndex insertIntoVisibleIndex:visibleIndex];
     _selectedPage.identityFrame = identityFrame;
     _selectedPage.frame = pageFrame;
-    _selectedPage.alpha = 1.0;
+    [self setOpacity:0.0 forObstructionLayerOfPage:_selectedPage];
+    //_selectedPage.alpha = 1.0;
     [self addSubview:_selectedPage];
 
 	[self setViewMode:HGPageScrollViewModeDeck animated:animated];
@@ -462,7 +464,8 @@ typedef enum{
 		_pageDeckSubtitleLabel.hidden = YES;
 		_pageSelector.hidden = YES;
 		_scrollView.scrollEnabled = NO;
-		_selectedPage.alpha = 1.0;
+		[self setOpacity:0.0 forObstructionLayerOfPage:_selectedPage];
+		//_selectedPage.alpha = 1.0;
 		// copy _selectedPage up in the view hierarchy, to allow touch events on its entire frame 
 		_selectedPage.frame = CGRectMake(0, headerView.frame.size.height, self.frame.size.width, _selectedPage.frame.size.height);
 		[self addSubview:_selectedPage];
@@ -605,11 +608,25 @@ typedef enum{
     
 	// add shadow (use shadowPath to improve rendering performance)
 	page.layer.shadowColor = [[UIColor blackColor] CGColor];	
-	page.layer.shadowOffset = CGSizeMake(8.0f, 12.0f);
+	page.layer.shadowOffset = CGSizeMake(3.0f, 8.0f);
 	page.layer.shadowOpacity = 0.3f;
+	page.layer.shadowRadius = 7.0;
     page.layer.masksToBounds = NO;
     UIBezierPath *path = [UIBezierPath bezierPathWithRect:page.bounds];
-    page.layer.shadowPath = path.CGPath;	
+    page.layer.shadowPath = path.CGPath;
+	
+	if([page.layer.sublayers count] < 2) {
+		CALayer *mask = [[CALayer alloc] init];
+		CGSize size = page.layer.frame.size;
+		// FIXME: Magic Numbers :S
+		mask.frame = CGRectMake(64., 92., size.width, size.height);
+		size = page.layer.bounds.size;
+		mask.bounds = CGRectMake(0., 0., size.width, size.height);
+		mask.backgroundColor = [[UIColor blackColor] CGColor];
+		mask.opaque = NO;
+		mask.opacity = 0.0f;
+		[page.layer addSublayer:mask];
+	}
  
     // add the page to the scroller
 	[_scrollView insertSubview:page atIndex:0];
@@ -620,7 +637,7 @@ typedef enum{
 - (void) insertPageInScrollView : (HGPageView *) page atIndex : (NSInteger) index animated : (BOOL) animated
 {
     //hide the new page before inserting it
-    page.alpha = 0.0; 
+    //page.alpha = 0.0; 
     
     // add the new page at the correct offset
 	[self addPageToScrollView:page atIndex:index]; 
@@ -1165,10 +1182,18 @@ typedef enum{
 {
 	CGFloat delta = _scrollView.contentOffset.x - page.frame.origin.x;
 	CGFloat step = self.frame.size.width;
-	CGFloat alpha = 1.0 - fabs(delta/step);
-	if(alpha > 0.95) alpha = 1.0;
-    page.alpha = alpha;
+	CGFloat alpha = fabs(delta/step)*2./5.;
+	if(alpha > 0.2) alpha = 0.2;
+	if(alpha < 0.05) alpha = 0.;
+	//CGFloat alpha = 1.0 - fabs(delta/step);
+	//if(alpha > 0.) alpha = 1.0;
+	//page.alpha = alpha;
+	[self setOpacity:alpha forObstructionLayerOfPage:page];
+}
 
+- (void)setOpacity:(CGFloat)alpha forObstructionLayerOfPage:(UIView *)page
+{
+	[[page.layer.sublayers lastObject] setOpacity:alpha];
 }
 
 
