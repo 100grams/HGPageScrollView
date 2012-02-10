@@ -996,6 +996,9 @@ typedef enum{
 
 
     [_deletedPages removeAllObjects];
+	
+	// Update selected page.
+	[self scrollViewDidScroll:_scrollView];
     
     // for indexes after the visible range, only adjust the scrollView contentSize
 //    if ([self.indexesAfterVisibleRange count] > 0) {
