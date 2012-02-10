@@ -682,7 +682,16 @@ typedef enum{
     
     // remove the pages from the scrollView
     [pages enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-        [obj removeFromSuperview];
+	    if (animated) {
+		    [UIView animateWithDuration:0.2
+				     animations:^{((HGPageView *)obj).alpha = 0.0f;}
+				     completion:^(BOOL finished) {
+					     [obj removeFromSuperview];
+					     ((HGPageView *)obj).alpha = 1.0f;
+				     }];
+	    } else {
+		    [obj removeFromSuperview];
+	    }
     }];
          
     // shift the remaining pages in the scrollView
@@ -716,7 +725,8 @@ typedef enum{
             // replace selected page with the new page which is in the same offset 
             newSelectedPage = [[_scrollView subviews] objectAtIndex:index];
         }
-        else{
+	// This could happen when removing the last page
+        if([self indexForVisiblePage:newSelectedPage] == NSNotFound) {
             // replace selected page with last visible page 
             newSelectedPage = [_visiblePages lastObject];
         }        
@@ -969,12 +979,20 @@ typedef enum{
     }
     
     
-    //update number of pages.  
-    [self setNumberOfPages:numPagesAfterDeletion];
-    // remove the pages marked for deletion from visiblePages 
-    [_visiblePages removeObjectsInArray:_deletedPages];
-    // ...and from the scrollView
-    [self removePagesFromScrollView:_deletedPages animated:animated];
+	// Temporarily update number of pages.
+	_numberOfPages = numPagesAfterDeletion;
+	// remove the pages marked for deletion from visiblePages 
+	[_visiblePages removeObjectsInArray:_deletedPages];
+	// ...and from the scrollView
+	[self removePagesFromScrollView:_deletedPages animated:animated];
+	// Actually update number of pages
+	if (animated) {
+		[UIView animateWithDuration:0.4 animations:^(void) {
+			[self setNumberOfPages:numPagesAfterDeletion];
+		}];
+	} else {
+		[self setNumberOfPages:numPagesAfterDeletion];
+	}
 
 
     [_deletedPages removeAllObjects];
