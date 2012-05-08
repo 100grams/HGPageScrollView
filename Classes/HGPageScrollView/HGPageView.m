@@ -31,6 +31,7 @@
 
 @synthesize reuseIdentifier=_reuseIdentifier;
 @synthesize identityFrame=_identityFrame;
+@synthesize maskLayer;
 
 
 - (id) initWithCoder:(NSCoder *)aDecoder
@@ -52,6 +53,7 @@
 */
 
 - (void)dealloc {
+    [maskLayer release];
     [super dealloc];
 }
 

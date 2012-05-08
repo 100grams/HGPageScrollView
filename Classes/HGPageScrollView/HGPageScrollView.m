@@ -93,7 +93,7 @@ typedef enum{
 // managing selection and scrolling
 - (void) updateVisiblePages;
 - (void) setAlphaForPage : (UIView*) page;
-- (void) setOpacity:(CGFloat)alpha forObstructionLayerOfPage:(UIView *)page;
+- (void) setOpacity:(CGFloat)alpha forObstructionLayerOfPage:(HGPageView *)page;
 - (void) preparePage : (HGPageView *) page forMode : (HGPageScrollViewMode) mode; 
 - (void) setViewMode:(HGPageScrollViewMode)mode animated:(BOOL)animated; //toggles selection/deselection
 
@@ -321,8 +321,14 @@ typedef enum{
         return;
     }
 
-    // Before moving back to DECK mode, refresh the selected page
     NSInteger visibleIndex = [_visiblePages indexOfObject:_selectedPage];
+
+    // notify the delegate
+    if ([self.delegate respondsToSelector:@selector(pageScrollView:willDeselectPageAtIndex:)]) {
+        [self.delegate pageScrollView:self willDeselectPageAtIndex:visibleIndex];
+    }		
+
+    // Before moving back to DECK mode, refresh the selected page
     NSInteger selectedPageScrollIndex = [self indexForSelectedPage];
     CGRect identityFrame = _selectedPage.identityFrame;
     CGRect pageFrame = _selectedPage.frame;
@@ -447,10 +453,6 @@ typedef enum{
         // hide the page header view
         headerView.alpha = 0.0;	
         
-        // notify the delegate
-		if ([self.delegate respondsToSelector:@selector(pageScrollView:willDeselectPageAtIndex:)]) {
-			[self.delegate pageScrollView:self willDeselectPageAtIndex:selectedIndex];
-		}		
 	};
 	
 	void (^CompletionBlock)(BOOL) = (mode==HGPageScrollViewModePage)? ^(BOOL finished){
@@ -481,7 +483,12 @@ typedef enum{
 		//_scrollView.frame = CGRectMake(0, _scrollViewTouch.frame.origin.y, self.frame.size.width, _scrollViewTouch.frame.size.height);
 		[self addSubview:_scrollViewTouch];
 		[self addSubview: _pageSelectorTouch];
-		if ([self.delegate respondsToSelector:@selector(pageScrollView:didDeselectPageAtIndex:)]) {
+		
+        if (!_selectedPage.maskLayer) {
+            [self setLayerPropertiesForPage:_selectedPage];
+        }
+        
+        if ([self.delegate respondsToSelector:@selector(pageScrollView:didDeselectPageAtIndex:)]) {
 			[self.delegate pageScrollView:self didDeselectPageAtIndex:selectedIndex];
 		}		
 	};
@@ -605,8 +612,20 @@ typedef enum{
     
 	// configure the page frame
     [self setFrameForPage : page atIndex:index];
-    
-	// add shadow (use shadowPath to improve rendering performance)
+    	
+	if(!page.maskLayer) {
+        [self setLayerPropertiesForPage:page];
+	}
+ 
+    // add the page to the scroller
+	[_scrollView insertSubview:page atIndex:0];
+
+}
+
+
+- (void) setLayerPropertiesForPage:(HGPageView*)page
+{
+    // add shadow (use shadowPath to improve rendering performance)
 	page.layer.shadowColor = [[UIColor blackColor] CGColor];	
 	page.layer.shadowOffset = CGSizeMake(3.0f, 8.0f);
 	page.layer.shadowOpacity = 0.3f;
@@ -614,24 +633,20 @@ typedef enum{
     page.layer.masksToBounds = NO;
     UIBezierPath *path = [UIBezierPath bezierPathWithRect:page.bounds];
     page.layer.shadowPath = path.CGPath;
-	
-	if([page.layer.sublayers count] < 2) {
-		CALayer *mask = [[CALayer alloc] init];
-		CGSize size = page.layer.frame.size;
-		// FIXME: Magic Numbers :S
-		mask.frame = CGRectMake(64., 92., size.width, size.height);
-		size = page.layer.bounds.size;
-		mask.bounds = CGRectMake(0., 0., size.width, size.height);
-		mask.backgroundColor = [[UIColor blackColor] CGColor];
-		mask.opaque = NO;
-		mask.opacity = 0.0f;
-		[page.layer addSublayer:mask];
-	}
- 
-    // add the page to the scroller
-	[_scrollView insertSubview:page atIndex:0];
 
+    page.maskLayer = [[[CALayer alloc] init] autorelease];
+    CGSize size = page.identityFrame.size;
+    // FIXME: Magic Numbers :S
+    page.maskLayer.frame = CGRectMake(0,0, size.width, size.height); //CGRectMake(64., 92., size.width, size.height);
+//    size = page.layer.bounds.size;
+//    page.maskLayer.bounds = CGRectMake(0., 0., size.width, size.height);
+    page.maskLayer.backgroundColor = [[UIColor blackColor] CGColor];
+    page.maskLayer.opaque = NO;
+    page.maskLayer.opacity = 0.0f;
+    [page.layer addSublayer:page.maskLayer];
 }
+
+
 
 // inserts a page to the scroll view at a given offset by pushing existing pages forward.
 - (void) insertPageInScrollView : (HGPageView *) page atIndex : (NSInteger) index animated : (BOOL) animated
@@ -1206,15 +1221,20 @@ typedef enum{
 	CGFloat alpha = fabs(delta/step)*2./5.;
 	if(alpha > 0.2) alpha = 0.2;
 	if(alpha < 0.05) alpha = 0.;
-	//CGFloat alpha = 1.0 - fabs(delta/step);
-	//if(alpha > 0.) alpha = 1.0;
-	//page.alpha = alpha;
-	[self setOpacity:alpha forObstructionLayerOfPage:page];
+    
+    if ([page isKindOfClass:[HGPageView class]]) {
+        [self setOpacity:alpha forObstructionLayerOfPage:(HGPageView*)page];
+    }
+    else{
+        CGFloat alpha = 1.0 - fabs(delta/step);
+        if(alpha > 0.) alpha = 1.0;
+        page.alpha = alpha;        
+    }
 }
 
-- (void)setOpacity:(CGFloat)alpha forObstructionLayerOfPage:(UIView *)page
+- (void)setOpacity:(CGFloat)alpha forObstructionLayerOfPage:(HGPageView *)page
 {
-	[[page.layer.sublayers lastObject] setOpacity:alpha];
+	[page.maskLayer setOpacity:alpha];
 }
 
 

@@ -85,6 +85,12 @@
     MyPageData *pageData = [[[MyPageData alloc] init] autorelease];
     pageData.navController = navController;
     [_myPageDataArray insertObject:pageData atIndex:0];
+
+    if ([self respondsToSelector:@selector(addChildViewController:)]) {
+        // set MyTableViewController as our own child as long as we're in deck mode. 
+        [self addChildViewController:myViewController];
+    }
+
 	
 	UIBarButtonItem *deckButton = [[[UIBarButtonItem alloc] initWithTitle:[NSString stringWithFormat:@"%d", [_myPageDataArray count]] style:UIBarButtonItemStyleBordered target:self action:@selector(didClickBrowsePages:)] autorelease];
 
@@ -158,7 +164,15 @@
     
     MyPageData *pageData = [_myPageDataArray objectAtIndex:index];
     if (pageData.navController) {
-        return (HGPageView*)pageData.navController.topViewController.view;
+
+        if ([self respondsToSelector:@selector(childViewControllers)]) {
+            // on iOS 5 use built-in view controller hierarchy support
+            UIViewController *viewController = [self.childViewControllers objectAtIndex:0];
+            return (HGPageView*)viewController.view;
+        }
+        else{
+            return (HGPageView*)pageData.navController.topViewController.view;
+        }
     }
     else{
         static NSString *pageId = @"pageId";
@@ -260,6 +274,16 @@
         pageContentsScrollView.scrollEnabled = YES;
         
     }
+    else{
+        if ([self respondsToSelector:@selector(childViewControllers)]) {
+
+            // this page is presented within UINavigationController navigation stack
+            // while in DECK mode, the view controller owning this view is our own child. This is done to be consistent with iOS view-heirarchy rules. 
+            // Now that the page is about to be selected (HGPageScroller is switching to PAGE mode), we need to associate the view controller with the UINaivationController in which it belongs.
+            UIViewController *childViewController = [self.childViewControllers objectAtIndex:0];
+            [pageData.navController pushViewController:childViewController animated:NO]; 
+        }
+    }
     
 	
 }
@@ -298,6 +322,16 @@
         NSMutableArray *items = [NSMutableArray arrayWithArray:toolbar.items];
         [items removeLastObject];
         toolbar.items = items;
+    }
+    else{
+        if ([self respondsToSelector:@selector(addChildViewController:)]) {
+
+            // this page is presented within UINavigationController navigation stack
+            // while in PAGE mode, the view controller owning this page is a child of UINavigationController. 
+            // Before moving back to DECK mode, we need to re-associate this view controller with us (making it our child). After the transition to DECK mode completes, the page is inserted as a subview into HGPageScrollView. Before this happens, the view controller owning this page must be our own child. This is done to be consistent with iOS view-heirarchy rules.
+            UIViewController *viewController = pageData.navController.topViewController;
+            [self addChildViewController:viewController];
+        }
     }
 
     
