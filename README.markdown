@@ -45,7 +45,8 @@ Animating page insertion/deletion will only take effect if it is done within the
   
 ## Requirements ##
 
-- iOS 4.3 or later (Sample project was created with Xcode 3.2.6, iOS SDK 4.3 GM Seed)
+- iOS 4.3 or later (Original sample project was created with Xcode 3.2.6, iOS SDK 4.3 GM Seed)
+EDIT 9 May 2012: added compatibility with iOS 5.1.  
 
 ## Usage ##
 
@@ -66,7 +67,7 @@ You can extend HGPageView by deriving from it, or as shown in the sample project
 
 ## Known limitations ##
 
-- Does not support landscape orientation
+- Does not support landscape orientation. If you're up for the challenge of adding this support, let me know... 
  
 
 ## License ##
