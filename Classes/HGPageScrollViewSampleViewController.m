@@ -40,6 +40,8 @@
 @end
 
 
+#define kPlatformSupportsViewControllerHeirarchy ([self respondsToSelector:@selector(childViewControllers)] && [self.childViewControllers isKindOfClass:[NSArray class]])
+
 @implementation HGPageScrollViewSampleViewController
 
 
@@ -86,7 +88,7 @@
     pageData.navController = navController;
     [_myPageDataArray insertObject:pageData atIndex:0];
 
-    if ([self respondsToSelector:@selector(addChildViewController:)]) {
+    if (kPlatformSupportsViewControllerHeirarchy) {
         // set MyTableViewController as our own child as long as we're in deck mode. 
         [self addChildViewController:myViewController];
     }
@@ -165,7 +167,7 @@
     MyPageData *pageData = [_myPageDataArray objectAtIndex:index];
     if (pageData.navController) {
 
-        if ([self respondsToSelector:@selector(childViewControllers)]) {
+        if (kPlatformSupportsViewControllerHeirarchy) {
             // on iOS 5 use built-in view controller hierarchy support
             UIViewController *viewController = [self.childViewControllers objectAtIndex:0];
             return (HGPageView*)viewController.view;
@@ -275,7 +277,7 @@
         
     }
     else{
-        if ([self respondsToSelector:@selector(childViewControllers)]) {
+        if (kPlatformSupportsViewControllerHeirarchy) {
 
             // this page is presented within UINavigationController navigation stack
             // while in DECK mode, the view controller owning this view is our own child. This is done to be consistent with iOS view-heirarchy rules. 
