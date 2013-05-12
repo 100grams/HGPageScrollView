@@ -53,7 +53,10 @@
 }
 
 - (void)setImage:(UIImage *)_image {
+    [_image retain];
+    [image release];
     image = _image;
+
     [imageView setImage:image];
 }
 
