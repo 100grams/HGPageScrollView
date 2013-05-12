@@ -27,6 +27,7 @@
 
 #import <UIKit/UIKit.h>
 #import "HGPageScrollView.h"
+#import "HGPageImageView.h"
 
 #define kNumPages 10
 

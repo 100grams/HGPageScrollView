@@ -78,6 +78,16 @@
 		pageData.subtitle = [NSString stringWithFormat:@"%d: Subtitle text with some extra information", i];
 		pageData.image = [UIImage imageNamed:[NSString stringWithFormat:@"image%d", i]];
 		[_myPageDataArray addObject:pageData];
+        
+        if ( i < 3 ) {
+            // Add another image-only page
+            MyPageData *imagePageData = [[[MyPageData alloc] init] autorelease];
+            imagePageData.title = [NSString stringWithFormat:@"%d im: Title text", i];
+            imagePageData.subtitle = [NSString stringWithFormat:@"%d im: Subtitle text", i];
+            imagePageData.image = pageData.image;
+            imagePageData.isImageOnly = YES;
+            [_myPageDataArray addObject:imagePageData];
+        }
 	}
     
     // create a sample navigationController and insert it's rootViewController's view into the data array
@@ -175,6 +185,16 @@
         else{
             return (HGPageView*)pageData.navController.topViewController.view;
         }
+    } else if (pageData.isImageOnly) {
+        CGSize imageSize = [[pageData image] size];
+        CGRect frame = CGRectMake(0, 0, 320, 320.0 / imageSize.width * imageSize.height);
+        
+        HGPageImageView *imageView = [[HGPageImageView alloc]
+                                      initWithFrame:frame];
+        [imageView setImage:[pageData image]];
+        [imageView setReuseIdentifier:@"imageId"];
+        
+        return imageView;
     }
     else{
         static NSString *pageId = @"pageId";
