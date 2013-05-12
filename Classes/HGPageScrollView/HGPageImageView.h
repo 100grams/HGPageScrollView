@@ -1,9 +1,8 @@
 //
-//  HGPageScrollViewSampleViewController.h
+//  HGPageImageView.h
 //  HGPageScrollViewSample
 //
-//  Created by Rotem Rubnov on 13/3/2011.
-//	Copyright (C) 2011 TomTom
+//  Created by Hans Engel on 5/12/13.
 //
 //	Permission is hereby granted, free of charge, to any person obtaining a copy
 //	of this software and associated documentation files (the "Software"), to deal
@@ -23,23 +22,13 @@
 //	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //	THE SOFTWARE.
 //
-//
 
-#import <UIKit/UIKit.h>
-#import "HGPageScrollView.h"
-#import "HGPageImageView.h"
+#import "HGPageView.h"
 
-#define kNumPages 10
-
-@interface HGPageScrollViewSampleViewController : UIViewController <HGPageScrollViewDelegate, HGPageScrollViewDataSource, UITextFieldDelegate> {
-		
-	HGPageScrollView *_myPageScrollView;
-    NSMutableArray   *_myPageDataArray;
-	
-	IBOutlet UIToolbar *toolbar;
-            
-    NSMutableIndexSet *indexesToDelete, *indexesToInsert, *indexesToReload;
+@interface HGPageImageView : HGPageView {
+    UIImageView *imageView;
 }
 
-@end
+@property (nonatomic, retain, setter=setImage:) UIImage *image;
 
+@end

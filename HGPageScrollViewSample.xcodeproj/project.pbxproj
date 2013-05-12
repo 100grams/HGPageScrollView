@@ -36,6 +36,7 @@
 		5E903D5C132D6A4E00231F45 /* image8.png in Resources */ = {isa = PBXBuildFile; fileRef = 5E903D52132D6A4E00231F45 /* image8.png */; };
 		5E903D5D132D6A4E00231F45 /* image9.png in Resources */ = {isa = PBXBuildFile; fileRef = 5E903D53132D6A4E00231F45 /* image9.png */; };
 		5E903D64132D6AF800231F45 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5E903D63132D6AF800231F45 /* QuartzCore.framework */; };
+		FC2A2A7C174015DB0018ED01 /* HGPageImageView.m in Sources */ = {isa = PBXBuildFile; fileRef = FC2A2A7B174015DB0018ED01 /* HGPageImageView.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -80,6 +81,8 @@
 		5E903D53132D6A4E00231F45 /* image9.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = image9.png; sourceTree = "<group>"; };
 		5E903D63132D6AF800231F45 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		8D1107310486CEB800E47090 /* HGPageScrollViewSample-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "HGPageScrollViewSample-Info.plist"; plistStructureDefinitionIdentifier = "com.apple.xcode.plist.structure-definition.iphone.info-plist"; sourceTree = "<group>"; };
+		FC2A2A7A174015DB0018ED01 /* HGPageImageView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HGPageImageView.h; sourceTree = "<group>"; };
+		FC2A2A7B174015DB0018ED01 /* HGPageImageView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HGPageImageView.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -188,6 +191,8 @@
 				5E903D3E132D69D300231F45 /* HGPageScrollView.xib */,
 				5E903D3F132D69D300231F45 /* HGPageView.h */,
 				5E903D40132D69D300231F45 /* HGPageView.m */,
+				FC2A2A7A174015DB0018ED01 /* HGPageImageView.h */,
+				FC2A2A7B174015DB0018ED01 /* HGPageImageView.m */,
 			);
 			path = HGPageScrollView;
 			sourceTree = "<group>";
@@ -296,6 +301,7 @@
 				5E53C6FD132F956F005322CE /* MyPageView.m in Sources */,
 				5E78B098134C8B4F00633F0F /* MyTableViewController.m in Sources */,
 				5E78B09D134C8CFC00633F0F /* MyDetailViewController.m in Sources */,
+				FC2A2A7C174015DB0018ED01 /* HGPageImageView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
