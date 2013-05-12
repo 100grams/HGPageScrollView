@@ -1,9 +1,8 @@
 //
-//  HGPageView.h
-//  HGPageDeckSample
+//  HGPageImageView.m
+//  HGPageScrollViewSample
 //
-//  Created by Rotem Rubnov on 11/3/2011.
-//  Copyright 2011 100 grams software.
+//  Created by Hans Engel on 5/12/13.
 //
 //	Permission is hereby granted, free of charge, to any person obtaining a copy
 //	of this software and associated documentation files (the "Software"), to deal
@@ -24,22 +23,45 @@
 //	THE SOFTWARE.
 //
 
-#import <UIKit/UIKit.h>
+#import "HGPageImageView.h"
 
+@implementation HGPageImageView
 
-@interface HGPageView : UIView {
+@synthesize image;
 
-	@protected
-	CGRect	  _identityFrame;
-
-	@private
-	NSString *_reuseIdentifier;
+- (id)initWithCoder:(NSCoder *)aDecoder {
+    self = [super initWithCoder:aDecoder];
+    if ( self ) {
+        [self _init];
+    }
+    return self;
 }
 
-@property (nonatomic,readwrite,copy) NSString *reuseIdentifier;
-@property (nonatomic, assign) CGRect identityFrame;
-@property (nonatomic, retain) CALayer *maskLayer;
+- (id)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+    if ( self ) {
+        [self _init];
+    }
+    return self;
+}
 
-- (void)prepareForReuse;    // if the page is reusable (has a reuse identifier), this is called just before the cell is returned from HGPageScrollView method dequeueReusablePageWithIdentifier:.  If you override, you MUST call super.
+- (void)_init {
+    _identityFrame = [self frame];
+
+    imageView = [[[UIImageView alloc] initWithFrame:[self frame]] retain];
+    [self addSubview:imageView];
+}
+
+- (void)setImage:(UIImage *)_image {
+    image = _image;
+    [imageView setImage:image];
+}
+
+- (void)dealloc {
+    [imageView release];
+    [image release];
+
+    [super dealloc];
+}
 
 @end

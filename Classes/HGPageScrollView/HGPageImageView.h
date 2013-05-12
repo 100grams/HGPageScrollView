@@ -1,9 +1,8 @@
 //
-//  HGPageView.h
-//  HGPageDeckSample
+//  HGPageImageView.h
+//  HGPageScrollViewSample
 //
-//  Created by Rotem Rubnov on 11/3/2011.
-//  Copyright 2011 100 grams software.
+//  Created by Hans Engel on 5/12/13.
 //
 //	Permission is hereby granted, free of charge, to any person obtaining a copy
 //	of this software and associated documentation files (the "Software"), to deal
@@ -24,22 +23,12 @@
 //	THE SOFTWARE.
 //
 
-#import <UIKit/UIKit.h>
+#import "HGPageView.h"
 
-
-@interface HGPageView : UIView {
-
-	@protected
-	CGRect	  _identityFrame;
-
-	@private
-	NSString *_reuseIdentifier;
+@interface HGPageImageView : HGPageView {
+    UIImageView *imageView;
 }
 
-@property (nonatomic,readwrite,copy) NSString *reuseIdentifier;
-@property (nonatomic, assign) CGRect identityFrame;
-@property (nonatomic, retain) CALayer *maskLayer;
-
-- (void)prepareForReuse;    // if the page is reusable (has a reuse identifier), this is called just before the cell is returned from HGPageScrollView method dequeueReusablePageWithIdentifier:.  If you override, you MUST call super.
+@property (nonatomic, retain, setter=setImage:) UIImage *image;
 
 @end
