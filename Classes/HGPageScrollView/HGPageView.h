@@ -29,8 +29,10 @@
 
 @interface HGPageView : UIView {
 
-	@private
+	@protected
 	CGRect	  _identityFrame;
+
+	@private
 	NSString *_reuseIdentifier;
 }
 

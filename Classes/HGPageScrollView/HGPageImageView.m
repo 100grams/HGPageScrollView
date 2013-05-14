@@ -1,9 +1,8 @@
 //
-//  HGPageScrollViewSampleViewController.h
+//  HGPageImageView.m
 //  HGPageScrollViewSample
 //
-//  Created by Rotem Rubnov on 13/3/2011.
-//	Copyright (C) 2011 TomTom
+//  Created by Hans Engel on 5/12/13.
 //
 //	Permission is hereby granted, free of charge, to any person obtaining a copy
 //	of this software and associated documentation files (the "Software"), to deal
@@ -23,23 +22,49 @@
 //	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //	THE SOFTWARE.
 //
-//
 
-#import <UIKit/UIKit.h>
-#import "HGPageScrollView.h"
 #import "HGPageImageView.h"
 
-#define kNumPages 10
+@implementation HGPageImageView
 
-@interface HGPageScrollViewSampleViewController : UIViewController <HGPageScrollViewDelegate, HGPageScrollViewDataSource, UITextFieldDelegate> {
-		
-	HGPageScrollView *_myPageScrollView;
-    NSMutableArray   *_myPageDataArray;
-	
-	IBOutlet UIToolbar *toolbar;
-            
-    NSMutableIndexSet *indexesToDelete, *indexesToInsert, *indexesToReload;
+@synthesize image;
+
+- (id)initWithCoder:(NSCoder *)aDecoder {
+    self = [super initWithCoder:aDecoder];
+    if ( self ) {
+        [self _init];
+    }
+    return self;
+}
+
+- (id)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+    if ( self ) {
+        [self _init];
+    }
+    return self;
+}
+
+- (void)_init {
+    _identityFrame = [self frame];
+
+    imageView = [[[UIImageView alloc] initWithFrame:[self frame]] retain];
+    [self addSubview:imageView];
+}
+
+- (void)setImage:(UIImage *)_image {
+    [_image retain];
+    [image release];
+    image = _image;
+
+    [imageView setImage:image];
+}
+
+- (void)dealloc {
+    [imageView release];
+    [image release];
+
+    [super dealloc];
 }
 
 @end
-
