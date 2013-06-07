@@ -78,4 +78,8 @@ Please report bugs/issues to help improve this code.
 
 Any suggestions and/or code to help improve this source will be much appreciated.
 
-Thanks!  
+Thanks!
+
+[![endorse](https://api.coderwall.com/rubnov/endorsecount.png)](https://coderwall.com/rubnov)
+
+Did you find this project helpful? Please endorse me... (It's free)
